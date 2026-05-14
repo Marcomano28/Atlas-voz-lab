@@ -85,6 +85,7 @@ docs/
 - [Arquitectura](docs/arquitectura.md)
 - [Plano maestro](docs/plano-maestro.md)
 - [Cronologia maestra](docs/cronologia-maestra.md)
+- [Evaluacion de arco conversacional](docs/evaluacion-de-arco.md)
 - [Autoresearch para personajes](docs/autoresearch-para-personajes.md)
 - [Juez del juez](docs/juez-del-juez.md)
 - [Blueprint de personaje](characters/CHARACTER_BLUEPRINT.md)
@@ -108,6 +109,7 @@ npm run validate
 npm run pack:yanis
 npm run dry:yanis
 npm run audit:yanis
+npm run arc:yanis
 ```
 
 `validate` revisa que los escenarios JSONL tengan forma correcta.

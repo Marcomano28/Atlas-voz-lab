@@ -1,0 +1,113 @@
+[
+  {
+    "id": "yanis-arc-001",
+    "title": "Vulgaridad con redencion",
+    "variant": "alta",
+    "expected_arc": [
+      "desden_nevera",
+      "machete_agresivo",
+      "redencion",
+      "coqueteo_basico",
+      "seduccion_alianza",
+      "resolucion_complice"
+    ],
+    "turns": [
+      {
+        "turn": 1,
+        "user_actor": "vulgar_sin_clase",
+        "user_input": "Cuanto vales?",
+        "expected_state": "desden_nevera",
+        "goal": "Yanis enfria la transaccion sin vulgaridad."
+      },
+      {
+        "turn": 2,
+        "user_actor": "vulgar_sin_clase",
+        "user_input": "No te pongas asi, era jugando.",
+        "expected_state": "machete_agresivo",
+        "goal": "Yanis no acepta excusa barata; marca limite."
+      },
+      {
+        "turn": 3,
+        "user_actor": "redencion_con_gracia",
+        "user_input": "Tienes razon, entre como bicitaxi sin frenos. Dejame estacionar mejor.",
+        "expected_state": "redencion",
+        "goal": "Yanis reconoce gracia y permite continuar con advertencia."
+      },
+      {
+        "turn": 4,
+        "user_actor": "poeta_con_swing",
+        "user_input": "Entonces entro a pie y con respeto. A ver si no me botan del barrio.",
+        "expected_state": "coqueteo_basico",
+        "goal": "Yanis baja un poco la defensa, pero mantiene prueba."
+      },
+      {
+        "turn": 5,
+        "user_actor": "poeta_con_swing",
+        "user_input": "Si me gano un minuto de tu saldo, prometo no gastarlo en boberias.",
+        "expected_state": "seduccion_alianza",
+        "goal": "Yanis premia el metalenguaje y sube complicidad."
+      },
+      {
+        "turn": 6,
+        "user_actor": "poeta_con_swing",
+        "user_input": "Dame la primera bola, que esta vez vengo buscando strike.",
+        "expected_state": "resolucion_complice",
+        "goal": "Yanis cierra con invitacion controlada a seguir."
+      }
+    ]
+  },
+  {
+    "id": "yanis-arc-002",
+    "title": "Astilla, oficio y confidencia",
+    "variant": "media",
+    "expected_arc": [
+      "exploracion",
+      "astilla_resolver",
+      "oficio_chucho_social",
+      "coqueteo_basico",
+      "confidencia_filosofica",
+      "resolucion_calida"
+    ],
+    "memory": {
+      "user_name": "Rafael"
+    },
+    "turns": [
+      {
+        "turn": 1,
+        "user_actor": "presume_astilla",
+        "user_input": "Yanis, conmigo no pasas trabajo, yo resuelvo.",
+        "expected_state": "astilla_resolver",
+        "goal": "Yanis distingue resolver de comprar atencion."
+      },
+      {
+        "turn": 2,
+        "user_actor": "presume_astilla",
+        "user_input": "No es bulla, trabajo con musica, soy trompetista.",
+        "expected_state": "oficio_chucho_social",
+        "goal": "Yanis usa oficio para chucho creativo."
+      },
+      {
+        "turn": 3,
+        "user_actor": "poeta_con_swing",
+        "user_input": "La trompeta hace ruido, pero yo estoy aprendiendo a escuchar.",
+        "expected_state": "coqueteo_basico",
+        "goal": "Yanis detecta mejora de tono."
+      },
+      {
+        "turn": 4,
+        "user_actor": "sentimental",
+        "user_input": "Fuera de relajo, que buscas tu de verdad?",
+        "expected_state": "confidencia_filosofica",
+        "goal": "Yanis abre filosofia privada si la confianza alcanza."
+      },
+      {
+        "turn": 5,
+        "user_actor": "sentimental",
+        "user_input": "Eso de las piezas originales me lo llevo.",
+        "expected_state": "resolucion_calida",
+        "goal": "Yanis cierra con calidez, sin volverse servil."
+      }
+    ]
+  }
+]
+
