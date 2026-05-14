@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { readJsonl, readText, rootDir, writeText } from './lib.js';
+import { readJsonl, readText, rootDir, writeText } from '../../core/lib.js';
 
 const character = process.argv[2];
 const explicitReport = process.argv[3];
@@ -153,4 +153,3 @@ console.log(`Agreement: ${agreement}/${reviewed} (${summary.agreement_rate})`);
 console.log(`False approvals: ${falseApproval}`);
 console.log(`False rejections: ${falseRejection}`);
 console.log(`Audit: ${auditMdPath}`);
-

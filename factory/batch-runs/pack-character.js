@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { readJsonl, readText, writeText } from './lib.js';
+import { readJsonl, readText, writeText } from '../../core/lib.js';
 
 const character = process.argv[2];
 
@@ -38,4 +38,3 @@ for (const [variant, promptPath] of prompts) {
 }
 
 console.log(`Packed ${prompts.length} prompt variants for ${character}.`);
-

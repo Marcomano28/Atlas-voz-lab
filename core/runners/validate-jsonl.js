@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { readJsonl, rootDir } from './lib.js';
+import { readJsonl, rootDir } from '../lib.js';
 
 const requiredScenarioFields = [
   'id',
@@ -60,4 +60,3 @@ if (errors.length > 0) {
 }
 
 console.log(`Validated ${count} JSONL records in ${files.length} files.`);
-

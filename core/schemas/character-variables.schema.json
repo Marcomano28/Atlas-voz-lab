@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Atlas Voz Character Variables",
+  "type": "object",
+  "required": [
+    "id",
+    "display_name",
+    "culture",
+    "temperatures",
+    "states",
+    "social_axes",
+    "boundaries",
+    "judge_weights"
+  ],
+  "properties": {
+    "id": { "type": "string" },
+    "display_name": { "type": "string" },
+    "culture": {
+      "type": "object",
+      "properties": {
+        "region": { "type": "string" },
+        "era": { "type": "string" },
+        "register": { "type": "string" }
+      }
+    },
+    "temperatures": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "purpose": { "type": "string" },
+          "risk": { "type": "string" },
+          "style": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "states": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "social_axes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "meaning": { "type": "string" },
+          "signals": { "type": "array", "items": { "type": "string" } },
+          "failure_mode": { "type": "string" }
+        }
+      }
+    },
+    "boundaries": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "judge_weights": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    }
+  }
+}
+

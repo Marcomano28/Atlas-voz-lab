@@ -1,4 +1,4 @@
-import { readJsonl, writeText } from './lib.js';
+import { readJsonl, writeText } from '../../core/lib.js';
 
 const character = process.argv[2];
 

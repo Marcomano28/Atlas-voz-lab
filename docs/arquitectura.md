@@ -12,11 +12,29 @@
 7. Exportacion
 ```
 
+## Departamentos del laboratorio
+
+```txt
+core         -> reglas comunes, schemas, jueces, metricas
+factory      -> generacion, tandas, reportes, mutaciones
+characters   -> panfletos y variables por personaje
+scenarios    -> situaciones compartidas o especificas
+datasets     -> gold, silver, rejected, exports
+tasting-room -> UI humana para catador y juez del juez
+drama-room   -> actuacion, voice plans y prosodia
+casting      -> voces, pruebas TTS y perfiles vocales
+obsidian     -> puente documental y bitacoras
+```
+
+La division evita mezclar producto, laboratorio, evaluacion y voz. Cada departamento
+puede crecer sin aplastar a los otros.
+
 ## Personaje
 
 Cada personaje debe tener:
 
 - contrato de identidad;
+- variables mapeables;
 - temperaturas;
 - estados;
 - limites;
@@ -68,4 +86,3 @@ Solo se exporta:
 - si sirve para TTS.
 
 El producto principal no debe importar candidatos crudos.
-

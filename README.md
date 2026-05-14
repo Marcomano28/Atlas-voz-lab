@@ -33,6 +33,16 @@ hipotesis de personaje
 ## Estructura
 
 ```txt
+core/
+  runners/
+  judges/
+  metrics/
+  schemas/
+factory/
+  candidate-generation/
+  recipe-mutation/
+  batch-runs/
+  reports/
 characters/
   yanislaidis/
     prompts/
@@ -44,9 +54,30 @@ characters/
     evaluations/
       results/
     voice_plan/
+scenarios/
+  shared/
+datasets/
+  gold/
+  silver/
+  rejected/
+  exports/
+drama-room/
+casting/
+tasting-room/
 docs/
-scripts/
 ```
+
+## Departamentos
+
+- `core`: utilidades, schemas, runners base, jueces y metricas compartidas.
+- `factory`: produccion de candidatos, tandas, mutaciones de receta y reportes.
+- `characters`: panfletos, variables y pruebas por personaje.
+- `scenarios`: situaciones compartidas entre personajes.
+- `datasets`: material aprobado, silver, rechazado y exportable.
+- `drama-room`: actuacion, voice plans, pausas, risa, suspiro y prosodia.
+- `casting`: voces base, perfiles vocales, pruebas TTS y comparativas.
+- `tasting-room`: futura UI para catador humano y juez del juez.
+- `obsidian`: notas puente hacia el vault de conocimiento.
 
 ## Documentos guia
 
@@ -54,6 +85,8 @@ scripts/
 - [Arquitectura](docs/arquitectura.md)
 - [Autoresearch para personajes](docs/autoresearch-para-personajes.md)
 - [Juez del juez](docs/juez-del-juez.md)
+- [Blueprint de personaje](characters/CHARACTER_BLUEPRINT.md)
+- [Variables de Yanislaidis](characters/yanislaidis/variables.json)
 
 ## Primer personaje
 
@@ -71,6 +104,8 @@ Yanislaidis es el primer personaje de laboratorio porque ya tiene:
 ```bash
 npm run validate
 npm run pack:yanis
+npm run dry:yanis
+npm run audit:yanis
 ```
 
 `validate` revisa que los escenarios JSONL tengan forma correcta.

@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "validate": "node scripts/validate-jsonl.js",
-    "pack:yanis": "node scripts/pack-character.js yanislaidis",
-    "dry:yanis": "node scripts/run-dry-loop.js yanislaidis",
-    "audit:yanis": "node scripts/audit-judge.js yanislaidis"
+    "validate": "node core/runners/validate-jsonl.js",
+    "pack:yanis": "node factory/batch-runs/pack-character.js yanislaidis",
+    "dry:yanis": "node factory/batch-runs/run-dry-loop.js yanislaidis",
+    "audit:yanis": "node factory/reports/audit-judge.js yanislaidis"
   }
 }
