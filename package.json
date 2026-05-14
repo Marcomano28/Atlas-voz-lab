@@ -8,6 +8,7 @@
     "pack:yanis": "node factory/batch-runs/pack-character.js yanislaidis",
     "dry:yanis": "node factory/batch-runs/run-dry-loop.js yanislaidis",
     "audit:yanis": "node factory/reports/audit-judge.js yanislaidis",
-    "arc:yanis": "node factory/batch-runs/run-arc-dry-loop.js yanislaidis"
+    "arc:yanis": "node factory/batch-runs/run-arc-dry-loop.js yanislaidis",
+    "serve:tasting": "python3 -m http.server 8765 -d tasting-room"
   }
 }

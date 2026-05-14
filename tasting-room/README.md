@@ -17,3 +17,19 @@ Pregunta central:
 Esto sabe a barrio de verdad o solo tiene azucar por arriba?
 ```
 
+## v0
+
+Primera pizarra de control local:
+
+- carga reportes JSON;
+- muestra arcos;
+- muestra score del reloj;
+- muestra distancia;
+- muestra placer escenico;
+- muestra notas del microscopio.
+
+Abrir:
+
+```txt
+tasting-room/index.html
+```

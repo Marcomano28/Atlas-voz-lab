@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Atlas Voz Lab - Tasting Room</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Atlas Voz Lab</p>
+          <h1>Tasting Room</h1>
+        </div>
+        <div class="status">
+          <span id="reportName">sin reporte</span>
+          <span id="reportState">esperando JSON</span>
+        </div>
+      </header>
+
+      <section class="loader">
+        <div>
+          <label for="fileInput">Cargar reporte JSON</label>
+          <input id="fileInput" type="file" accept=".json,application/json">
+        </div>
+        <button id="loadSample" type="button">Cargar demo</button>
+      </section>
+
+      <section class="dashboard">
+        <article class="metric">
+          <span>Arcos</span>
+          <strong id="metricArcs">0</strong>
+        </article>
+        <article class="metric">
+          <span>Promedio</span>
+          <strong id="metricAverage">--</strong>
+        </article>
+        <article class="metric">
+          <span>Fuertes</span>
+          <strong id="metricStrong">0</strong>
+        </article>
+        <article class="metric">
+          <span>Revision</span>
+          <strong id="metricReview">0</strong>
+        </article>
+      </section>
+
+      <section class="workspace">
+        <aside class="panel">
+          <div class="panel-head">
+            <h2>Arcos</h2>
+            <span id="arcCount">0</span>
+          </div>
+          <div id="arcList" class="arc-list"></div>
+        </aside>
+
+        <section class="detail">
+          <div class="detail-head">
+            <div>
+              <p class="eyebrow" id="detailVariant">--</p>
+              <h2 id="detailTitle">Carga un reporte</h2>
+            </div>
+            <span id="detailDecision" class="pill">--</span>
+          </div>
+
+          <div class="gauges">
+            <div class="gauge">
+              <div class="gauge-label">
+                <span>Clock score</span>
+                <strong id="clockScore">--</strong>
+              </div>
+              <div class="bar"><span id="clockBar"></span></div>
+            </div>
+            <div class="gauge">
+              <div class="gauge-label">
+                <span>Distancia</span>
+                <strong id="distanceValue">--</strong>
+              </div>
+              <div class="bar distance"><span id="distanceBar"></span></div>
+            </div>
+            <div class="gauge">
+              <div class="gauge-label">
+                <span>Placer</span>
+                <strong id="pleasureValue">--</strong>
+              </div>
+              <div class="bar pleasure"><span id="pleasureBar"></span></div>
+            </div>
+          </div>
+
+          <div class="grid-two">
+            <article class="readout">
+              <h3>Reloj</h3>
+              <dl id="clockReadout"></dl>
+            </article>
+            <article class="readout">
+              <h3>Juez de arco</h3>
+              <dl id="scoreReadout"></dl>
+            </article>
+          </div>
+
+          <article class="notes">
+            <h3>Notas del microscopio</h3>
+            <ul id="clockNotes"></ul>
+          </article>
+        </section>
+      </section>
+    </main>
+
+    <script src="sample-report.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
+
