@@ -86,6 +86,7 @@ docs/
 - [Plano maestro](docs/plano-maestro.md)
 - [Cronologia maestra](docs/cronologia-maestra.md)
 - [Evaluacion de arco conversacional](docs/evaluacion-de-arco.md)
+- [Reloj interior de Yanis](docs/reloj-interior-yanis.md)
 - [Autoresearch para personajes](docs/autoresearch-para-personajes.md)
 - [Juez del juez](docs/juez-del-juez.md)
 - [Blueprint de personaje](characters/CHARACTER_BLUEPRINT.md)

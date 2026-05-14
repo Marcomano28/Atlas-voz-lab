@@ -1,4 +1,5 @@
 import { readText, writeText } from '../../core/lib.js';
+import { spawnSync } from 'node:child_process';
 
 const character = process.argv[2];
 
@@ -92,7 +93,39 @@ function decide(total, scores) {
   return 'weak_arc';
 }
 
+function runClock(arc) {
+  const payload = JSON.stringify({
+    actor_profile: arc.turns[0]?.user_actor ?? 'poeta_con_swing',
+    messages: arc.turns.map((turn) => turn.user_input)
+  });
+
+  const script = [
+    'import json, sys',
+    'from core.instruments.yanis_clock import YanisClock',
+    'payload = json.loads(sys.stdin.read())',
+    'clock = YanisClock(actor_profile=payload.get("actor_profile", "poeta_con_swing"))',
+    'for msg in payload.get("messages", []):',
+    '    clock.update(msg)',
+    'print(json.dumps({"snapshot": clock.snapshot(), "arc_quality": clock.arc_quality(), "report": clock.report()}, ensure_ascii=False))'
+  ].join('\n');
+
+  const result = spawnSync('python3', ['-c', script], {
+    cwd: process.cwd(),
+    input: payload,
+    encoding: 'utf8'
+  });
+
+  if (result.status !== 0) {
+    return {
+      error: result.stderr || 'clock failed'
+    };
+  }
+
+  return JSON.parse(result.stdout);
+}
+
 const results = arcs.map((arc) => {
+  const clock = runClock(arc);
   const scores = {
     state_coherence: scoreStateCoherence(arc),
     dramatic_tension: scoreDramaticTension(arc),
@@ -110,7 +143,10 @@ const results = arcs.map((arc) => {
     turns: arc.turns.length,
     total,
     decision: decide(total, scores),
-    scores
+    scores,
+    clock_arc: clock.arc_quality ?? null,
+    clock_snapshot: clock.snapshot ?? null,
+    clock_error: clock.error ?? null
   };
 });
 
@@ -127,7 +163,7 @@ const mdPath = `out/${character}/arc-reports/arc-dry-run-${timestamp}.md`;
 await writeText(jsonPath, `${JSON.stringify({ character, average, summary, results }, null, 2)}\n`);
 
 const rows = results
-  .map((result) => `| ${result.id} | ${result.title} | ${result.variant} | ${result.turns} | ${result.total} | ${result.decision} |`)
+  .map((result) => `| ${result.id} | ${result.title} | ${result.variant} | ${result.turns} | ${result.total} | ${result.decision} | ${result.clock_arc?.score ?? 'n/a'} | ${result.clock_arc?.notes?.join('; ') ?? result.clock_error ?? ''} |`)
   .join('\n');
 
 await writeText(mdPath, `# Arc dry run ${character}
@@ -138,8 +174,8 @@ Summary:
 
 ${Object.entries(summary).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
 
-| Arc | Title | Variant | Turns | Total | Decision |
-| --- | --- | --- | ---: | ---: | --- |
+| Arc | Title | Variant | Turns | Total | Decision | Clock score | Clock notes |
+| --- | --- | --- | ---: | ---: | --- | ---: | --- |
 ${rows}
 `);
 
@@ -147,4 +183,3 @@ console.log(`Arc dry loop completed for ${character}.`);
 console.log(`Average score: ${average.toFixed(2)}`);
 console.log(`Summary: ${JSON.stringify(summary)}`);
 console.log(`Report: ${mdPath}`);
-
