@@ -83,6 +83,7 @@ docs/
 
 - [Fabrica de chocolates](docs/fabrica-de-chocolates.md)
 - [Arquitectura](docs/arquitectura.md)
+- [Plano maestro](docs/plano-maestro.md)
 - [Autoresearch para personajes](docs/autoresearch-para-personajes.md)
 - [Juez del juez](docs/juez-del-juez.md)
 - [Blueprint de personaje](characters/CHARACTER_BLUEPRINT.md)
