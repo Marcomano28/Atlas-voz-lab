@@ -53,6 +53,7 @@ scripts/
 - [Fabrica de chocolates](docs/fabrica-de-chocolates.md)
 - [Arquitectura](docs/arquitectura.md)
 - [Autoresearch para personajes](docs/autoresearch-para-personajes.md)
+- [Juez del juez](docs/juez-del-juez.md)
 
 ## Primer personaje
 

@@ -6,6 +6,7 @@
   "scripts": {
     "validate": "node scripts/validate-jsonl.js",
     "pack:yanis": "node scripts/pack-character.js yanislaidis",
-    "dry:yanis": "node scripts/run-dry-loop.js yanislaidis"
+    "dry:yanis": "node scripts/run-dry-loop.js yanislaidis",
+    "audit:yanis": "node scripts/audit-judge.js yanislaidis"
   }
 }
