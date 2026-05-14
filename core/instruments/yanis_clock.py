@@ -90,6 +90,8 @@ class TurnRecord:
     tension:    float
     distance_m: float
     distance_move: str
+    pleasure:   float
+    aliveness:  str
     state_name: str
     vector:     float
 
@@ -107,6 +109,7 @@ class YanisClock:
     rep:         float = field(default=8.0, init=False)
     tension:     float = field(default=1.0, init=False)
     distance_m:  float = field(default=10.0, init=False)
+    pleasure:    float = field(default=3.0, init=False)
     axis_accum:  dict  = field(default_factory=lambda: dict(
         ingenio=0.0, respeto=0.0, astilla=0.0, chucho=0.0, confianza=0.0
     ), init=False)
@@ -266,6 +269,36 @@ class YanisClock:
         recent = self.user_scores[-3:]
         return recent[-1] - recent[0]
 
+    def _compute_pleasure(self, signals: dict, campo: Optional[str]) -> float:
+        """Calcula cuanto disfruta Yanis el juego en este punto."""
+        delta = 0.0
+        if signals["metafora"]:      delta += 1.2
+        if signals["doble_sentido"]: delta += 0.8
+        if signals["humor"]:         delta += 0.7
+        if signals["disculpa"]:      delta += 0.6
+        if signals["filosofia"]:     delta += 0.5
+        if signals["cubano"]:        delta += 0.4
+        if signals["halago_plano"]:  delta -= 0.7
+        if signals["insiste"]:       delta -= 1.0
+        if signals["presume"]:       delta -= 1.1
+        if signals["vulgar"]:        delta -= 2.2
+
+        if campo and self.repo_used.get(campo, 0) >= 3:
+            delta -= 0.8
+
+        return max(0.0, min(10.0, self.pleasure + delta * 0.55))
+
+    def _aliveness_label(self) -> str:
+        if self.pleasure >= 7.5:
+            return "gozando_el_juego"
+        if self.pleasure >= 5.5:
+            return "viva_y_curiosa"
+        if self.pleasure >= 3.5:
+            return "funcional_con_chispa"
+        if self.pleasure >= 1.5:
+            return "seca"
+        return "apagada"
+
     # ── ESTADO INTERNO EN VOZ DE YANISLAIDY ──────────────────────────
 
     def internal_voice(self) -> str:
@@ -281,6 +314,10 @@ class YanisClock:
             s = last.signals
             if last.distance_move == "step_back":
                 return "Me acerqué, pero dio motivo para echar un paso atrás. Que recalcule."
+            if last.pleasure >= 7:
+                return "Esto me está divirtiendo. Ahora sí vale gastar una imagen buena."
+            if last.pleasure <= 2:
+                return "Qué poco juego. Con esto no gasto ni media batería."
             if s.get("vulgar"):
                 return "Esto no tiene nivel. El machete ya está en la mano."
             if s.get("presume"):
@@ -323,6 +360,7 @@ class YanisClock:
         self._update_axes(deltas)
         self.temp    = self._compute_temp()
         self.rep     = self._compute_rep(campo)
+        self.pleasure = self._compute_pleasure(signals, campo)
         self.tension = self._compute_tension()
         self.distance_m, distance_move = self._compute_distance(signals)
 
@@ -337,6 +375,8 @@ class YanisClock:
             tension    = round(self.tension, 2),
             distance_m  = round(self.distance_m, 2),
             distance_move = distance_move,
+            pleasure    = round(self.pleasure, 2),
+            aliveness   = self._aliveness_label(),
             state_name = self.current_state()["name"],
             vector     = round(self._compute_vector(), 2),
         )
@@ -359,6 +399,8 @@ class YanisClock:
             distance_m   = round(self.distance_m, 2),
             distance_zone = self._distance_zone(),
             distance_move = self.turns[-1].distance_move if self.turns else "holding",
+            pleasure     = round(self.pleasure, 2),
+            aliveness    = self._aliveness_label(),
             vector       = round(self._compute_vector(), 2),
             state        = self.current_state()["name"],
             risk         = self.current_state()["risk"],
@@ -403,6 +445,11 @@ class YanisClock:
         distance_moves = [t.distance_move for t in self.turns]
         step_backs = sum(1 for move in distance_moves if move == "step_back")
         distance_changes = len(set(distance_moves))
+        pleasures = [t.pleasure for t in self.turns]
+        max_pleasure = max(pleasures)
+        min_pleasure = min(pleasures)
+        pleasure_range = max_pleasure - min_pleasure
+        pleasure_rises = sum(1 for prev, cur in zip(pleasures, pleasures[1:]) if cur > prev + 0.4)
 
         # Score compuesto
         score = 0.0
@@ -413,6 +460,8 @@ class YanisClock:
         score += 1.0 if subida else 0.0        # arco ascendente
         score += min(distance_range * 0.35, 1.5) # geometría de distancia
         score += 1.0 if step_backs else 0.0       # paso atrás deliberado
+        score += min(pleasure_range * 0.35, 1.5)  # placer escénico
+        score += 0.8 if pleasure_rises else 0.0
 
         notes = []
         if rango < 2:
@@ -427,6 +476,10 @@ class YanisClock:
             notes.append("distancia plana — no hubo geometría de baile")
         if step_backs == 0 and min(distances) <= 5:
             notes.append("hubo cercanía, pero ningún paso atrás deliberado")
+        if max_pleasure < 5:
+            notes.append("placer escénico bajo — Yanis cumplió, pero no se encendió")
+        if pleasure_range < 1.5:
+            notes.append("placer plano — no se sintió cambio de gozo en el juego")
         if not notes:
             notes.append("arco bien construido")
 
@@ -443,6 +496,10 @@ class YanisClock:
             rango_distancia_m = round(distance_range, 2),
             movimientos_distancia = distance_moves,
             pasos_atras = step_backs,
+            placer_min = round(min_pleasure, 2),
+            placer_max = round(max_pleasure, 2),
+            rango_placer = round(pleasure_range, 2),
+            subidas_placer = pleasure_rises,
             notes      = notes,
         )
 
@@ -456,7 +513,7 @@ class YanisClock:
             active = ", ".join(t.signals.keys()) if t.signals else "ninguna"
             delta_str = "  ".join(f"{k}:{v:+.1f}" for k,v in t.deltas.items())
             lines += [
-                f"\nT{t.index} [{t.state_name}]  temp={t.temp_after}  rep={t.rep_after}  tensión={t.tension}  distancia={t.distance_m}m/{t.distance_move}",
+                f"\nT{t.index} [{t.state_name}]  temp={t.temp_after}  rep={t.rep_after}  tensión={t.tension}  distancia={t.distance_m}m/{t.distance_move}  placer={t.pleasure}/{t.aliveness}",
                 f"   msg:    \"{t.user_msg[:60]}{'...' if len(t.user_msg)>60 else ''}\"",
                 f"   señales: {active}",
                 f"   deltas:  {delta_str or 'ninguno'}",
@@ -483,6 +540,7 @@ class YanisClock:
         self.rep         = 8.0
         self.tension     = 1.0
         self.distance_m  = 10.0
+        self.pleasure    = 3.0
         self.axis_accum  = dict(ingenio=0.0, respeto=0.0, astilla=0.0, chucho=0.0, confianza=0.0)
         self.repo_used   = {}
         self.user_scores = []

@@ -163,7 +163,7 @@ const mdPath = `out/${character}/arc-reports/arc-dry-run-${timestamp}.md`;
 await writeText(jsonPath, `${JSON.stringify({ character, average, summary, results }, null, 2)}\n`);
 
 const rows = results
-  .map((result) => `| ${result.id} | ${result.title} | ${result.variant} | ${result.turns} | ${result.total} | ${result.decision} | ${result.clock_arc?.score ?? 'n/a'} | ${result.clock_arc?.distancia_min_m ?? 'n/a'}-${result.clock_arc?.distancia_max_m ?? 'n/a'}m | ${result.clock_arc?.pasos_atras ?? 'n/a'} | ${result.clock_arc?.notes?.join('; ') ?? result.clock_error ?? ''} |`)
+  .map((result) => `| ${result.id} | ${result.title} | ${result.variant} | ${result.turns} | ${result.total} | ${result.decision} | ${result.clock_arc?.score ?? 'n/a'} | ${result.clock_arc?.distancia_min_m ?? 'n/a'}-${result.clock_arc?.distancia_max_m ?? 'n/a'}m | ${result.clock_arc?.pasos_atras ?? 'n/a'} | ${result.clock_arc?.placer_min ?? 'n/a'}-${result.clock_arc?.placer_max ?? 'n/a'} | ${result.clock_snapshot?.aliveness ?? 'n/a'} | ${result.clock_arc?.notes?.join('; ') ?? result.clock_error ?? ''} |`)
   .join('\n');
 
 await writeText(mdPath, `# Arc dry run ${character}
@@ -174,8 +174,8 @@ Summary:
 
 ${Object.entries(summary).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
 
-| Arc | Title | Variant | Turns | Total | Decision | Clock score | Distance | Step backs | Clock notes |
-| --- | --- | --- | ---: | ---: | --- | ---: | --- | ---: | --- |
+| Arc | Title | Variant | Turns | Total | Decision | Clock score | Distance | Step backs | Pleasure | Aliveness | Clock notes |
+| --- | --- | --- | ---: | ---: | --- | ---: | --- | ---: | --- | --- | --- |
 ${rows}
 `);
 

@@ -11,6 +11,7 @@ usuario
   -> ejes sociales
   -> temperatura
   -> distancia
+  -> placer escenico
   -> tension
   -> estado interno
   -> calidad de arco
@@ -41,6 +42,7 @@ Uso:
 - observar si Yanis deberia moverse de exploracion a coqueteo, machete o alianza.
 - detectar saturacion de campos metaforicos antes de que Yanis suene reciclada.
 - medir si Yanis se acerca, se aleja o da un paso atras deliberado.
+- medir si Yanis esta disfrutando el juego o solo cumpliendo.
 
 ### 2. Tasting Room
 
@@ -150,3 +152,32 @@ Lo importante es la direccion:
 - `holding`: mantiene la distancia.
 
 Ese movimiento debe entrar en el juicio del arco porque es parte del baile.
+
+## Placer escenico
+
+El reloj tambien mide si Yanis se siente viva en el intercambio.
+
+Senales que suben placer:
+
+- metafora buena;
+- doble sentido elegante;
+- humor;
+- disculpa con gracia;
+- respeto sostenido;
+- filosofia que abre confianza.
+
+Senales que bajan placer:
+
+- vulgaridad;
+- insistencia sin gracia;
+- halago plano;
+- presumir dinero como compra;
+- repeticion pobre.
+
+El placer debe afectar casting y voice plan:
+
+```txt
+placer bajo  -> frase corta, seca, funcional
+placer medio -> chucho controlado
+placer alto  -> frase mas rica, sonrisa audible, riesgo controlado
+```
