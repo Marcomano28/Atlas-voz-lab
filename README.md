@@ -48,6 +48,12 @@ docs/
 scripts/
 ```
 
+## Documentos guia
+
+- [Fabrica de chocolates](docs/fabrica-de-chocolates.md)
+- [Arquitectura](docs/arquitectura.md)
+- [Autoresearch para personajes](docs/autoresearch-para-personajes.md)
+
 ## Primer personaje
 
 Yanislaidis es el primer personaje de laboratorio porque ya tiene:
@@ -70,4 +76,3 @@ npm run pack:yanis
 
 `pack:yanis` arma paquetes de prueba en `out/yanislaidis/` para comparar variantes
 de prompt o modelo.
-
