@@ -89,6 +89,7 @@ docs/
 - [Reloj interior de Yanis](docs/reloj-interior-yanis.md)
 - [Autoresearch para personajes](docs/autoresearch-para-personajes.md)
 - [Juez del juez](docs/juez-del-juez.md)
+- [Manual del supervisor de calidad](docs/manual-supervisor-calidad.md)
 - [Blueprint de personaje](characters/CHARACTER_BLUEPRINT.md)
 - [Variables de Yanislaidis](characters/yanislaidis/variables.json)
 
