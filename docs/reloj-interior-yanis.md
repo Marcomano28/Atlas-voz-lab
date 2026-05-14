@@ -10,6 +10,7 @@ usuario
   -> señales
   -> ejes sociales
   -> temperatura
+  -> distancia
   -> tension
   -> estado interno
   -> calidad de arco
@@ -39,6 +40,7 @@ Uso:
 - ver si el usuario activa respeto, ingenio, astilla, chucho o confianza;
 - observar si Yanis deberia moverse de exploracion a coqueteo, machete o alianza.
 - detectar saturacion de campos metaforicos antes de que Yanis suene reciclada.
+- medir si Yanis se acerca, se aleja o da un paso atras deliberado.
 
 ### 2. Tasting Room
 
@@ -123,3 +125,28 @@ Por eso el reloj expone:
 - `rep`;
 - `arc_quality.variedad_repo`;
 - notas de metalenguaje repetitivo.
+
+## Distancia dramatica
+
+El reloj tambien debe medir geometria:
+
+```txt
+20m -> lejos / nevera / vitrina
+10m -> exploracion
+5m  -> coqueteo controlado
+2m  -> complicidad
+paso atras -> recuperacion de mando despues de cercania
+```
+
+La distancia no sustituye a la temperatura. Puede haber alta temperatura con gran
+distancia: machete, desden o vitrina. Tambien puede haber baja voz y cercania:
+confidencia.
+
+Lo importante es la direccion:
+
+- `closing`: Yanis permite acercamiento.
+- `opening`: Yanis se aleja.
+- `step_back`: Yanis retrocede despues de haber estado cerca.
+- `holding`: mantiene la distancia.
+
+Ese movimiento debe entrar en el juicio del arco porque es parte del baile.

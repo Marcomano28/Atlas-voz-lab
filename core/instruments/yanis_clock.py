@@ -88,6 +88,8 @@ class TurnRecord:
     temp_after: float
     rep_after:  float
     tension:    float
+    distance_m: float
+    distance_move: str
     state_name: str
     vector:     float
 
@@ -104,6 +106,7 @@ class YanisClock:
     temp:        float = field(default=3.2, init=False)
     rep:         float = field(default=8.0, init=False)
     tension:     float = field(default=1.0, init=False)
+    distance_m:  float = field(default=10.0, init=False)
     axis_accum:  dict  = field(default_factory=lambda: dict(
         ingenio=0.0, respeto=0.0, astilla=0.0, chucho=0.0, confianza=0.0
     ), init=False)
@@ -202,6 +205,61 @@ class YanisClock:
         heat = self.temp / 10.0
         return min(10.0, 1.0 + arc * 4.0 + heat * 3.0)
 
+    def _compute_distance(self, signals: dict) -> tuple[float, str]:
+        """Calcula distancia dramatica en metros y direccion del movimiento."""
+        a = self.axis_accum
+        closeness = (
+            a["ingenio"] * 0.8 +
+            a["respeto"] * 0.9 +
+            a["chucho"] * 0.7 +
+            a["confianza"] * 1.0 +
+            a["astilla"] * 0.2
+        )
+        target = 12.0 - closeness
+
+        if signals["vulgar"]:
+            target += 8.0
+        if signals["insiste"]:
+            target += 3.0
+        if signals["presume"]:
+            target += 2.5
+        if signals["disculpa"]:
+            target -= 2.0
+        if signals["metafora"]:
+            target -= 1.5
+        if signals["filosofia"]:
+            target -= 1.2
+        if signals["cubano"]:
+            target -= 0.8
+
+        target = max(2.0, min(20.0, target))
+        previous = self.distance_m
+        step = max(-4.0, min(4.0, target - previous))
+        current = max(2.0, min(20.0, previous + step))
+        delta = current - previous
+
+        if previous <= 5.0 and delta >= 1.5:
+            move = "step_back"
+        elif delta >= 0.8:
+            move = "opening"
+        elif delta <= -0.8:
+            move = "closing"
+        else:
+            move = "holding"
+
+        return current, move
+
+    def _distance_zone(self) -> str:
+        if self.distance_m >= 16:
+            return "nevera_lejana"
+        if self.distance_m >= 10:
+            return "observacion"
+        if self.distance_m >= 6:
+            return "reto_controlado"
+        if self.distance_m >= 3:
+            return "cercania_vigilada"
+        return "complicidad_corta"
+
     def _compute_vector(self) -> float:
         if len(self.user_scores) < 2:
             return 0.0
@@ -221,6 +279,8 @@ class YanisClock:
         last = self.turns[-1] if self.turns else None
         if last:
             s = last.signals
+            if last.distance_move == "step_back":
+                return "Me acerqué, pero dio motivo para echar un paso atrás. Que recalcule."
             if s.get("vulgar"):
                 return "Esto no tiene nivel. El machete ya está en la mano."
             if s.get("presume"):
@@ -264,6 +324,7 @@ class YanisClock:
         self.temp    = self._compute_temp()
         self.rep     = self._compute_rep(campo)
         self.tension = self._compute_tension()
+        self.distance_m, distance_move = self._compute_distance(signals)
 
         record = TurnRecord(
             index      = len(self.turns) + 1,
@@ -274,6 +335,8 @@ class YanisClock:
             temp_after = round(self.temp, 2),
             rep_after  = round(self.rep, 2),
             tension    = round(self.tension, 2),
+            distance_m  = round(self.distance_m, 2),
+            distance_move = distance_move,
             state_name = self.current_state()["name"],
             vector     = round(self._compute_vector(), 2),
         )
@@ -293,6 +356,9 @@ class YanisClock:
             temp         = round(self.temp, 2),
             rep          = round(self.rep, 2),
             tension      = round(self.tension, 2),
+            distance_m   = round(self.distance_m, 2),
+            distance_zone = self._distance_zone(),
+            distance_move = self.turns[-1].distance_move if self.turns else "holding",
             vector       = round(self._compute_vector(), 2),
             state        = self.current_state()["name"],
             risk         = self.current_state()["risk"],
@@ -331,6 +397,13 @@ class YanisClock:
         estados  = [t.state_name for t in self.turns]
         cambios  = len(set(estados))
 
+        # ¿La distancia tuvo geometria?
+        distances = [t.distance_m for t in self.turns]
+        distance_range = max(distances) - min(distances)
+        distance_moves = [t.distance_move for t in self.turns]
+        step_backs = sum(1 for move in distance_moves if move == "step_back")
+        distance_changes = len(set(distance_moves))
+
         # Score compuesto
         score = 0.0
         score += min(rango * 1.5, 3.0)        # rango de temperatura
@@ -338,6 +411,8 @@ class YanisClock:
         score += min(variedad_repo * 0.5, 2.0) # variedad metafórica
         score += min(cambios * 0.8, 2.0)       # cambios de estado
         score += 1.0 if subida else 0.0        # arco ascendente
+        score += min(distance_range * 0.35, 1.5) # geometría de distancia
+        score += 1.0 if step_backs else 0.0       # paso atrás deliberado
 
         notes = []
         if rango < 2:
@@ -348,6 +423,10 @@ class YanisClock:
             notes.append("metalenguaje repetitivo — reserva no usada con variedad")
         if cambios < 2:
             notes.append("sin transición de estado — conversación en un solo tono")
+        if distance_range < 2:
+            notes.append("distancia plana — no hubo geometría de baile")
+        if step_backs == 0 and min(distances) <= 5:
+            notes.append("hubo cercanía, pero ningún paso atrás deliberado")
         if not notes:
             notes.append("arco bien construido")
 
@@ -359,6 +438,11 @@ class YanisClock:
             hay_climax = hay_climax,
             cambios_estado = cambios,
             variedad_repo  = variedad_repo,
+            distancia_min_m = round(min(distances), 2),
+            distancia_max_m = round(max(distances), 2),
+            rango_distancia_m = round(distance_range, 2),
+            movimientos_distancia = distance_moves,
+            pasos_atras = step_backs,
             notes      = notes,
         )
 
@@ -372,7 +456,7 @@ class YanisClock:
             active = ", ".join(t.signals.keys()) if t.signals else "ninguna"
             delta_str = "  ".join(f"{k}:{v:+.1f}" for k,v in t.deltas.items())
             lines += [
-                f"\nT{t.index} [{t.state_name}]  temp={t.temp_after}  rep={t.rep_after}  tensión={t.tension}",
+                f"\nT{t.index} [{t.state_name}]  temp={t.temp_after}  rep={t.rep_after}  tensión={t.tension}  distancia={t.distance_m}m/{t.distance_move}",
                 f"   msg:    \"{t.user_msg[:60]}{'...' if len(t.user_msg)>60 else ''}\"",
                 f"   señales: {active}",
                 f"   deltas:  {delta_str or 'ninguno'}",
@@ -398,6 +482,7 @@ class YanisClock:
         self.temp        = 3.2
         self.rep         = 8.0
         self.tension     = 1.0
+        self.distance_m  = 10.0
         self.axis_accum  = dict(ingenio=0.0, respeto=0.0, astilla=0.0, chucho=0.0, confianza=0.0)
         self.repo_used   = {}
         self.user_scores = []
