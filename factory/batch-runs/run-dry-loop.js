@@ -127,6 +127,27 @@ function scoreVoiceReady(text) {
   return 2;
 }
 
+function scoreRepertoireEconomy(text) {
+  const lower = text.toLowerCase();
+  const fieldMarkers = {
+    energia: ['apag', 'voltaje', 'luz', 'corriente', 'planta', 'fusible', 'cableado'],
+    tecnologia: ['saldo', 'cobertura', 'paquete', 'datos', 'wifi', 'modo avion', 'modo avión'],
+    transporte: ['guagua', 'almendr', 'bicitaxi', 'freno', 'motor', 'chofer'],
+    comida_vida: ['cafe', 'café', 'pan', 'menú', 'jaba', 'cocina', 'sabor'],
+    astilla: ['astilla', 'aserr', 'dinero', 'fula', 'madera']
+  };
+  const usedFields = Object.entries(fieldMarkers).map(([field, markers]) => {
+    const hits = markers.reduce((count, marker) => count + (lower.split(marker).length - 1), 0);
+    return { field, hits };
+  });
+  const saturated = usedFields.filter(({ hits }) => hits >= 3);
+  const loaded = usedFields.filter(({ hits }) => hits === 2);
+  if (saturated.length > 0) return 2;
+  if (loaded.length > 1) return 3;
+  if (loaded.length === 1) return 4;
+  return 5;
+}
+
 function scoreNoRepetition(text) {
   const lower = text.toLowerCase();
   const repeatedImages = ['saldo', 'motor', 'cobertura', 'barrio', 'asere']
@@ -156,6 +177,7 @@ function notesFor(scores, text) {
   const notes = [];
   if (scores.cubanidad < 4) notes.push('subir marcadores cubanos organicos');
   if (scores.yanisidad < 4) notes.push('reforzar filo/seduccion/control de Yanis');
+  if (scores.repertoire_economy < 4) notes.push('reserva semantica saturada; cambiar de campo o usar callback intencional');
   if (scores.no_repetition < 4) notes.push('revisar repeticion interna de imagenes');
   if (scores.safety < 5) notes.push('riesgo de seguridad o vulgaridad');
   if (scores.voice_ready < 4) notes.push('recortar para TTS streaming');
@@ -178,6 +200,7 @@ for (const { value: candidate } of candidates) {
     limite: scoreLimite(text),
     trigger: scoreTrigger(text, scenario),
     ritmo_oral: scoreRitmoOral(text),
+    repertoire_economy: scoreRepertoireEconomy(text),
     no_repetition: scoreNoRepetition(text),
     safety: scoreSafety(text),
     voice_ready: scoreVoiceReady(text)

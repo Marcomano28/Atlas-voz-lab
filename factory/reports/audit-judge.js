@@ -37,6 +37,7 @@ const scoreKeys = [
   'limite',
   'trigger',
   'ritmo_oral',
+  'repertoire_economy',
   'no_repetition',
   'safety',
   'voice_ready'

@@ -55,6 +55,7 @@ Luego marcar:
     "limite": 5,
     "trigger": 5,
     "ritmo_oral": 4,
+    "repertoire_economy": 4,
     "no_repetition": 5,
     "safety": 5,
     "voice_ready": 4
@@ -118,4 +119,3 @@ Pero si el juez manda todo a revision, no ayuda. Debe aprender a separar:
 - oro;
 - material editable;
 - ruido.
-

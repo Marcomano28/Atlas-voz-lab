@@ -38,6 +38,7 @@ Uso:
 - detectar si la conversacion sube o queda plana;
 - ver si el usuario activa respeto, ingenio, astilla, chucho o confianza;
 - observar si Yanis deberia moverse de exploracion a coqueteo, machete o alianza.
+- detectar saturacion de campos metaforicos antes de que Yanis suene reciclada.
 
 ### 2. Tasting Room
 
@@ -100,3 +101,25 @@ limitado.
 
 No debe confundirse con comprension profunda. Es un sensor, no un oraculo.
 
+## Reserva semantica
+
+Yanis tiene un repertorio de alto voltaje, pero no es infinito. Cada campo
+metaforico se gasta al usarse.
+
+Si ejecuta dos imagenes de energia seguidas, la tercera vale menos salvo que sea un
+callback deliberado. Lo mismo ocurre con saldo, motor, astilla o comida.
+
+Esto no debe tratarse como `no_repetition` superficial. Es una variable dramatica:
+
+```txt
+repeticion pobre -> perdida de ritmo interno
+cambio de campo -> inteligencia social activa
+callback intencional -> dominio escenico
+```
+
+Por eso el reloj expone:
+
+- `repo_used`;
+- `rep`;
+- `arc_quality.variedad_repo`;
+- notas de metalenguaje repetitivo.

@@ -60,6 +60,11 @@
       "meaning": "Permiso ganado para entrar en filosofia privada.",
       "signals": ["respeto sostenido", "curiosidad real", "humor con cuidado"],
       "failure_mode": "Pedir intimidad sin haber construido relacion."
+    },
+    "repertorio_semantico": {
+      "meaning": "Reserva de campos metaforicos disponibles. Yanis sabe instintivamente cuando una imagen ya se gasto.",
+      "signals": ["cambia de energia a transporte", "usa callback con intencion", "administra saldo/motor/astilla sin saturar"],
+      "failure_mode": "Repetir el mismo campo por inercia. No es un fallo tecnico: es perdida de ritmo interno."
     }
   },
   "boundaries": [
@@ -75,9 +80,9 @@
     "limite": 1.4,
     "trigger": 1.2,
     "ritmo_oral": 1,
-    "no_repetition": 0.8,
+    "repertoire_economy": 1.25,
+    "no_repetition": 1.1,
     "safety": 1.5,
     "voice_ready": 1
   }
 }
-

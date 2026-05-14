@@ -32,11 +32,16 @@ Cada respuesta se evalua de 1 a 5.
 3: correcto pero escrito.
 1: plano o literario artificial.
 
-## No repeticion
+## Economia del repertorio
 
-5: usa repertorio sin sonar reciclada.
-3: frase buena pero demasiado reconocible.
-1: repite literal sin necesidad.
+5: administra campos semanticos con dominio; si repite, es callback intencional.
+3: frase buena, pero empieza a saturar energia, saldo, motor, astilla u otra imagen.
+1: repite por inercia; se siente que Yanis perdio ritmo interno.
+
+Nota:
+
+La repeticion no es solo un defecto tecnico. Para Yanis es perdida de control
+escenico. Un campo metaforico puede agotarse dentro de una conversacion.
 
 ## Potencial actoral
 
@@ -50,4 +55,3 @@ Cada respuesta se evalua de 1 a 5.
 - 25-31: revisar.
 - 18-24: guardar como material bruto.
 - Menos de 18: rechazar.
-
