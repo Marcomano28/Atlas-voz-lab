@@ -1,0 +1,11 @@
+{
+  "name": "atlas-voz-lab",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "validate": "node scripts/validate-jsonl.js",
+    "pack:yanis": "node scripts/pack-character.js yanislaidis"
+  }
+}
+
