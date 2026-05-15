@@ -275,10 +275,23 @@ const reportMetadata = {
   rubric_sha256: results[0]?.metadata?.rubric_sha256 ?? null
 };
 
+function alivenessForReport(result) {
+  if (result.clock_arc?.source !== 'turn_annotations') {
+    return result.clock_snapshot?.aliveness ?? 'n/a';
+  }
+
+  const maxPleasure = result.clock_arc?.placer_max ?? 0;
+  if (maxPleasure >= 7.5) return 'gozando_el_juego';
+  if (maxPleasure >= 5.5) return 'viva_y_curiosa';
+  if (maxPleasure >= 3.5) return 'funcional_con_chispa';
+  if (maxPleasure >= 1.5) return 'seca';
+  return 'apagada';
+}
+
 await writeText(jsonPath, `${JSON.stringify({ character, metadata: reportMetadata, average, summary, results }, null, 2)}\n`);
 
 const rows = results
-  .map((result) => `| ${result.id} | ${result.title} | ${result.variant} | ${result.turns} | ${result.total} | ${result.decision} | ${result.clock_arc?.score ?? 'n/a'} | ${result.clock_arc?.distancia_min_m ?? 'n/a'}-${result.clock_arc?.distancia_max_m ?? 'n/a'}m | ${result.clock_arc?.pasos_atras ?? 'n/a'} | ${result.clock_arc?.placer_min ?? 'n/a'}-${result.clock_arc?.placer_max ?? 'n/a'} | ${result.clock_snapshot?.aliveness ?? 'n/a'} | ${result.clock_arc?.notes?.join('; ') ?? result.clock_error ?? ''} |`)
+  .map((result) => `| ${result.id} | ${result.title} | ${result.variant} | ${result.turns} | ${result.total} | ${result.decision} | ${result.clock_arc?.score ?? 'n/a'} | ${result.clock_arc?.distancia_min_m ?? 'n/a'}-${result.clock_arc?.distancia_max_m ?? 'n/a'}m | ${result.clock_arc?.pasos_atras ?? 'n/a'} | ${result.clock_arc?.placer_min ?? 'n/a'}-${result.clock_arc?.placer_max ?? 'n/a'} | ${alivenessForReport(result)} | ${result.clock_arc?.notes?.join('; ') ?? result.clock_error ?? ''} |`)
   .join('\n');
 
 await writeText(mdPath, `# Arc dry run ${character}
