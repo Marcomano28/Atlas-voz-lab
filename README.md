@@ -115,6 +115,7 @@ npm run dry:yanis
 npm run audit:yanis
 npm run arc:yanis
 npm run curate -- out/yanislaidis/reports/<report>.json
+npm run control:tasting
 ```
 
 `validate` revisa que los escenarios JSONL tengan forma correcta.
@@ -125,3 +126,6 @@ de prompt o modelo.
 `curate` lee un reporte JSON del juez y crea bandejas de trabajo en
 `characters/<personaje>/datasets/curation/`. No escribe en `gold`: el oro requiere
 decision humana.
+
+`control:tasting` abre el primer puesto de control/mando local para cargar
+reportes, ejecutar tandas y curar resultados desde botones.

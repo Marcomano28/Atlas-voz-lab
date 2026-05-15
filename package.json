@@ -11,6 +11,7 @@
     "arc:yanis": "node factory/batch-runs/run-arc-dry-loop.js yanislaidis",
     "curate": "node factory/curation/curate-report.js",
     "live:yanis:dry": "python3 factory/batch-runs/run-user-actor-loop.py --actor poeta_con_swing --turns 6",
+    "control:tasting": "node tasting-room/server.js",
     "serve:tasting": "python3 -m http.server 8765 -d tasting-room"
   }
 }

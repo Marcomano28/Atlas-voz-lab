@@ -3,6 +3,7 @@
   --bg: #111311;
   --panel: #1c211d;
   --panel-2: #242b25;
+  --panel-3: #171b19;
   --text: #f2efe7;
   --muted: #b8b2a5;
   --line: #3a4039;
@@ -37,7 +38,9 @@ input {
 
 .topbar,
 .loader,
+.command-bar,
 .dashboard,
+.queues,
 .workspace,
 .detail-head,
 .panel-head,
@@ -95,6 +98,38 @@ h3 {
   background: var(--panel);
 }
 
+.status .ok {
+  color: var(--ok);
+}
+
+.command-bar {
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  margin-bottom: 16px;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.command-bar pre {
+  width: min(560px, 100%);
+  max-height: 116px;
+  overflow: auto;
+  margin: 0;
+  padding: 12px;
+  color: var(--muted);
+  background: var(--panel-3);
+  border: 1px solid var(--line);
+  font-size: 12px;
+  white-space: pre-wrap;
+}
+
 .loader {
   justify-content: space-between;
   gap: 16px;
@@ -129,6 +164,11 @@ button:hover {
   border-color: var(--accent);
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .dashboard {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -136,7 +176,15 @@ button:hover {
   margin-bottom: 16px;
 }
 
+.queues {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 .metric,
+.queues article,
 .panel,
 .detail,
 .readout,
@@ -149,15 +197,22 @@ button:hover {
   padding: 16px;
 }
 
-.metric span {
+.metric span,
+.queues span {
   display: block;
   color: var(--muted);
   font-size: 13px;
   margin-bottom: 8px;
 }
 
-.metric strong {
+.metric strong,
+.queues strong {
   font-size: 28px;
+}
+
+.queues article {
+  padding: 14px;
+  background: var(--panel-2);
 }
 
 .workspace {
@@ -227,6 +282,20 @@ button:hover {
   color: var(--accent);
 }
 
+.pill[data-decision="rejected"],
+.pill[data-decision="weak_arc"] {
+  color: var(--danger);
+}
+
+.pill[data-decision="approved_candidate"],
+.pill[data-decision="strong_arc"] {
+  color: var(--ok);
+}
+
+.metadata {
+  margin-bottom: 16px;
+}
+
 .gauges {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -285,6 +354,21 @@ button:hover {
   padding: 16px;
 }
 
+.transcript {
+  margin-bottom: 12px;
+}
+
+.transcript p {
+  margin: 0 0 10px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.transcript p:last-child {
+  margin-bottom: 0;
+  color: var(--text);
+}
+
 dl {
   display: grid;
   grid-template-columns: minmax(120px, 0.8fr) 1fr;
@@ -310,6 +394,7 @@ dd {
 
 @media (max-width: 900px) {
   .topbar,
+  .command-bar,
   .loader,
   .workspace {
     flex-direction: column;
@@ -317,6 +402,7 @@ dd {
   }
 
   .dashboard,
+  .queues,
   .gauges,
   .grid-two {
     grid-template-columns: 1fr;
@@ -327,4 +413,3 @@ dd {
     min-height: auto;
   }
 }
-

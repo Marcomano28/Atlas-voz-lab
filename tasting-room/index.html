@@ -16,29 +16,48 @@
         <div class="status">
           <span id="reportName">sin reporte</span>
           <span id="reportState">esperando JSON</span>
+          <span id="serverState">control sin conectar</span>
         </div>
       </header>
+
+      <section class="command-bar">
+        <div>
+          <p class="eyebrow">Puesto de mando</p>
+          <div class="button-row">
+            <button id="runDry" type="button">Run dry</button>
+            <button id="runArc" type="button">Run arcs</button>
+            <button id="runLive" type="button">Run live dry</button>
+            <button id="curateCurrent" type="button">Curar reporte</button>
+          </div>
+        </div>
+        <pre id="commandLog">Esperando orden.</pre>
+      </section>
 
       <section class="loader">
         <div>
           <label for="fileInput">Cargar reporte JSON</label>
           <input id="fileInput" type="file" accept=".json,application/json">
         </div>
-        <button id="loadSample" type="button">Cargar demo</button>
+        <div class="button-row">
+          <button id="loadLatestDry" type="button">Ultimo dry</button>
+          <button id="loadLatestArc" type="button">Ultimo arc</button>
+          <button id="loadLatestLive" type="button">Ultimo live</button>
+          <button id="loadSample" type="button">Demo</button>
+        </div>
       </section>
 
       <section class="dashboard">
         <article class="metric">
-          <span>Arcos</span>
-          <strong id="metricArcs">0</strong>
+          <span>Items</span>
+          <strong id="metricItems">0</strong>
         </article>
         <article class="metric">
           <span>Promedio</span>
           <strong id="metricAverage">--</strong>
         </article>
         <article class="metric">
-          <span>Fuertes</span>
-          <strong id="metricStrong">0</strong>
+          <span>Aprobados</span>
+          <strong id="metricApproved">0</strong>
         </article>
         <article class="metric">
           <span>Revision</span>
@@ -46,13 +65,32 @@
         </article>
       </section>
 
+      <section class="queues">
+        <article>
+          <span>Approved</span>
+          <strong id="queueApproved">0</strong>
+        </article>
+        <article>
+          <span>Review</span>
+          <strong id="queueReview">0</strong>
+        </article>
+        <article>
+          <span>Rough</span>
+          <strong id="queueRough">0</strong>
+        </article>
+        <article>
+          <span>Rejected</span>
+          <strong id="queueRejected">0</strong>
+        </article>
+      </section>
+
       <section class="workspace">
         <aside class="panel">
           <div class="panel-head">
-            <h2>Arcos</h2>
-            <span id="arcCount">0</span>
+            <h2>Resultados</h2>
+            <span id="itemCount">0</span>
           </div>
-          <div id="arcList" class="arc-list"></div>
+          <div id="itemList" class="arc-list"></div>
         </aside>
 
         <section class="detail">
@@ -64,10 +102,15 @@
             <span id="detailDecision" class="pill">--</span>
           </div>
 
+          <article class="readout metadata">
+            <h3>Trazabilidad</h3>
+            <dl id="metadataReadout"></dl>
+          </article>
+
           <div class="gauges">
             <div class="gauge">
               <div class="gauge-label">
-                <span>Clock score</span>
+                <span>Score</span>
                 <strong id="clockScore">--</strong>
               </div>
               <div class="bar"><span id="clockBar"></span></div>
@@ -99,6 +142,12 @@
             </article>
           </div>
 
+          <article class="readout transcript">
+            <h3>Respuesta</h3>
+            <p id="userInput">--</p>
+            <p id="candidateResponse">--</p>
+          </article>
+
           <article class="notes">
             <h3>Notas del microscopio</h3>
             <ul id="clockNotes"></ul>
@@ -111,4 +160,3 @@
     <script src="app.js"></script>
   </body>
 </html>
-
