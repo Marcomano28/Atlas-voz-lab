@@ -327,6 +327,52 @@ Yanis queda como primer personaje de laboratorio con:
 - dry loop;
 - auditoria.
 
+## Fase 7 - Instrumentos finos del laboratorio
+
+### 2026-05-15 - Del juez de frases al catador de arco
+
+Commits de `atlas-voz-lab`:
+
+```text
+5a4dcb7 Add conversational arc evaluation
+5cb53de Add Yanis inner clock instrument
+06c817f Raise Yanis repertoire economy signal
+4394a25 Add Yanis dramatic distance metric
+39223da Add Yanis scenic pleasure signal
+7474422 Add tasting room control board
+86e8c38 Add quality supervisor manual
+cd12a10 Expand supervisor seed instructions
+efe560b Add user actor loop runner
+023cce9 Add schema-driven judge context
+```
+
+Cambio de rumbo:
+
+El laboratorio deja de preguntar solo "esta frase suena a Yanis?" y empieza a
+preguntar "este baile conversacional funciona?".
+
+Matices fijados:
+
+- la repeticion de repertorio es fallo de ritmo, no solo defecto tecnico;
+- la distancia dramatica es geometria y direccion, no interruptor on/off;
+- el paso atras deliberado se reconoce como herramienta de poder;
+- el placer escenico mide si Yanis esta viva en la escena;
+- el arco completo se evalua por tension, estados, placer, distancia y
+  resolucion;
+- el juez evoluciona hacia `variables.json` como fuente de verdad y
+  `judge_context` como paquete estandar.
+
+Nuevo mapa operativo:
+
+```text
+variables.json
+  -> YanisClock
+  -> judge_context
+  -> respuesta + arco + diagnostico accionable
+  -> supervisor humano calibra
+  -> dataset gold
+```
+
 ## Lectura general de la evolucion
 
 ```text
@@ -340,6 +386,7 @@ idea de IA con identidad
   -> memoria anonima persistente
   -> laboratorio separado
   -> fabrica de voces y evaluacion
+  -> instrumentos finos de arco, distancia y placer
 ```
 
 ## Cambios de rumbo principales
@@ -351,19 +398,21 @@ idea de IA con identidad
 5. De personaje moderado a temperatura/extremo: 2026-05-12.
 6. De memoria de sesion a perfil anonimo: 2026-05-13.
 7. De producto unico a producto + laboratorio: 2026-05-14.
+8. De juez de frases a catador de arco/personaje vivo: 2026-05-15.
 
 ## Proximo punto cronologico esperado
 
 El siguiente hito deberia ser:
 
 ```text
-Tasting Room v0
+Gold seeds de Yanis + Tasting Room con diagnostico accionable
 ```
 
 Objetivo:
 
-- revisar respuestas candidatas en UI;
+- reunir 20 frases gold minimas y 2 arcos gold;
+- avanzar hacia 80-120 frases y 5-10 dialogos patron;
+- revisar respuestas candidatas en UI con notas de receta;
 - permitir juicio humano del juez;
 - aprobar/revisar/rechazar sin editar JSONL a mano;
 - empezar a generar dataset gold de Yanis.
-
