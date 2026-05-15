@@ -9,6 +9,7 @@
     "dry:yanis": "node factory/batch-runs/run-dry-loop.js yanislaidis",
     "audit:yanis": "node factory/reports/audit-judge.js yanislaidis",
     "arc:yanis": "node factory/batch-runs/run-arc-dry-loop.js yanislaidis",
+    "live:yanis:dry": "python3 factory/batch-runs/run-user-actor-loop.py --actor poeta_con_swing --turns 6",
     "serve:tasting": "python3 -m http.server 8765 -d tasting-room"
   }
 }
