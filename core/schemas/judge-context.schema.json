@@ -4,6 +4,7 @@
   "type": "object",
   "required": [
     "version",
+    "judge_version",
     "judge_type",
     "character",
     "weights",
@@ -12,6 +13,7 @@
   ],
   "properties": {
     "version": { "type": "string" },
+    "judge_version": { "type": "string" },
     "judge_type": { "enum": ["response", "arc"] },
     "character": {
       "type": "object",
@@ -29,6 +31,15 @@
     "arc": { "type": "object" },
     "clock": { "type": "object" },
     "history": { "type": "array" },
+    "source": {
+      "type": "object",
+      "properties": {
+        "variables_path": { "type": "string" },
+        "rubric_path": { "type": "string" },
+        "variables_sha256": { "type": ["string", "null"] },
+        "rubric_sha256": { "type": ["string", "null"] }
+      }
+    },
     "weights": {
       "type": "object",
       "additionalProperties": { "type": "number" }
@@ -45,4 +56,3 @@
     "diagnostic_targets": { "type": "array", "items": { "type": "string" } }
   }
 }
-

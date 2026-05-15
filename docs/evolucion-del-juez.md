@@ -15,6 +15,7 @@ score unico              ->   score compuesto + diagnostico accionable
 sin memoria de sesion    ->   detecta patrones across turnos
 sin gold humano          ->   calibrado contra semillas gold
 sin auditoria            ->   juez-del-juez permanente
+sin versionado           ->   metadata con judge_version y hashes
 ```
 
 ## Fuente de verdad
@@ -65,6 +66,36 @@ El contrato:
 core/schemas/judge-context.schema.json
 ```
 
+## Versionado de juicio
+
+Cada entrada evaluada debe conservar metadata de juicio. Sin eso, cuando el
+laboratorio cambie de juez no se podra saber que receta aprobo cada linea del
+gold dataset.
+
+Campos minimos:
+
+```json
+{
+  "metadata": {
+    "schema_version": "judgment_metadata.v1",
+    "judged_at": "2026-05-15T10:00:00.000Z",
+    "judge_version": "yanis_judge.schema_context.v1",
+    "judge_context_version": "judge_context.v1",
+    "judge_type": "response",
+    "variables_sha256": "...",
+    "rubric_sha256": "..."
+  }
+}
+```
+
+Regla:
+
+```txt
+judge_version dice que receta juzgo
+variables_sha256 dice con que ADN exacto
+rubric_sha256 dice con que criterio escrito
+```
+
 ## Diagnostico accionable
 
 El juez no debe decir solo:
@@ -92,6 +123,7 @@ Debe decir:
 - Los pesos salen de `variables.json`.
 - El runner Python usa `judge_weights` reales para el dry score.
 - El contexto incluye distancia, placer y economia de repertorio.
+- Los reportes guardan `metadata.judge_version` y hashes de fuentes.
 
 ### Pendiente
 

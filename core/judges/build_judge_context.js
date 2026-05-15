@@ -1,4 +1,8 @@
+import { createHash } from 'node:crypto';
 import { readText } from '../lib.js';
+
+export const JUDGE_VERSION = 'yanis_judge.schema_context.v1';
+export const JUDGE_CONTEXT_VERSION = 'judge_context.v1';
 
 const responseDiagnosticTargets = [
   'main_failure',
@@ -22,9 +26,21 @@ const arcDiagnosticTargets = [
 
 export async function loadJudgeSource(character) {
   const characterRoot = `characters/${character}`;
-  const variables = JSON.parse(await readText(`${characterRoot}/variables.json`));
-  const rubric = await readText(`${characterRoot}/evaluations/rubrica_yanis.md`);
-  return { variables, rubric };
+  const variablesPath = `${characterRoot}/variables.json`;
+  const rubricPath = `${characterRoot}/evaluations/rubrica_yanis.md`;
+  const variablesText = await readText(variablesPath);
+  const rubric = await readText(rubricPath);
+  const variables = JSON.parse(variablesText);
+  return {
+    variables,
+    rubric,
+    source: {
+      variables_path: variablesPath,
+      rubric_path: rubricPath,
+      variables_sha256: sha256(variablesText),
+      rubric_sha256: sha256(rubric)
+    }
+  };
 }
 
 export function weightsForScenario(baseWeights, scenario = {}, clock = {}) {
@@ -73,17 +89,16 @@ export function buildResponseJudgeContext({
   candidate,
   scores = {},
   clock = null,
-  history = []
+  history = [],
+  source = {}
 }) {
   const weights = weightsForScenario(variables.judge_weights, scenario, clock ?? {});
   return {
-    version: 'judge_context.v1',
+    version: JUDGE_CONTEXT_VERSION,
+    judge_version: JUDGE_VERSION,
     judge_type: 'response',
     character: characterBlock(variables),
-    source: {
-      variables_path: `characters/${character}/variables.json`,
-      rubric_path: `characters/${character}/evaluations/rubrica_yanis.md`
-    },
+    source: sourceBlock(character, source),
     rubric_excerpt: rubric.slice(0, 1800),
     scenario,
     candidate,
@@ -105,17 +120,16 @@ export function buildArcJudgeContext({
   arc,
   scores = {},
   clockArc = null,
-  clockSnapshot = null
+  clockSnapshot = null,
+  source = {}
 }) {
   const weights = arcWeights(variables.judge_weights, clockArc ?? {});
   return {
-    version: 'judge_context.v1',
+    version: JUDGE_CONTEXT_VERSION,
+    judge_version: JUDGE_VERSION,
     judge_type: 'arc',
     character: characterBlock(variables),
-    source: {
-      variables_path: `characters/${character}/variables.json`,
-      rubric_path: `characters/${character}/evaluations/rubrica_yanis.md`
-    },
+    source: sourceBlock(character, source),
     rubric_excerpt: rubric.slice(0, 1200),
     arc,
     clock: {
@@ -128,6 +142,18 @@ export function buildArcJudgeContext({
     decision_rules: arcDecisionRules(),
     diagnostic_targets: arcDiagnosticTargets,
     diagnosis: diagnoseArc({ scores, arc, clockArc })
+  };
+}
+
+export function judgmentMetadata(context, judgedAt = new Date().toISOString()) {
+  return {
+    schema_version: 'judgment_metadata.v1',
+    judged_at: judgedAt,
+    judge_version: context.judge_version,
+    judge_context_version: context.version,
+    judge_type: context.judge_type,
+    variables_sha256: context.source?.variables_sha256 ?? null,
+    rubric_sha256: context.source?.rubric_sha256 ?? null
   };
 }
 
@@ -174,6 +200,19 @@ function characterBlock(variables) {
     social_axes: variables.social_axes,
     boundaries: variables.boundaries
   };
+}
+
+function sourceBlock(character, source = {}) {
+  return {
+    variables_path: source.variables_path ?? `characters/${character}/variables.json`,
+    rubric_path: source.rubric_path ?? `characters/${character}/evaluations/rubrica_yanis.md`,
+    variables_sha256: source.variables_sha256 ?? null,
+    rubric_sha256: source.rubric_sha256 ?? null
+  };
+}
+
+function sha256(text) {
+  return createHash('sha256').update(text).digest('hex');
 }
 
 function responseDecisionRules() {

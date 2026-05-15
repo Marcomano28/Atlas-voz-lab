@@ -230,6 +230,21 @@ respuesta + arco + reloj + variables
   -> nota de receta
 ```
 
+### Trazabilidad del juicio
+
+Cada entrada evaluada debe conservar metadata del juez que la aprobo, rechazo o
+dejo en revision:
+
+```txt
+metadata.judge_version
+metadata.judge_context_version
+metadata.variables_sha256
+metadata.rubric_sha256
+```
+
+Esto evita que el gold dataset pierda memoria historica cuando cambien los pesos,
+la rubrica o el propio juez.
+
 ## Lo que falta
 
 - modelo-juez real;

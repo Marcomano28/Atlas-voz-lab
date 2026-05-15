@@ -2,6 +2,7 @@ import { readJsonl, writeText } from '../../core/lib.js';
 import {
   buildResponseJudgeContext,
   decideResponseFromContext,
+  judgmentMetadata,
   loadJudgeSource
 } from '../../core/judges/build_judge_context.js';
 
@@ -17,6 +18,7 @@ const scenarios = await readJsonl(`${characterRoot}/scenarios/core.jsonl`);
 const candidates = await readJsonl(`${characterRoot}/datasets/candidates/dry_run_seed.jsonl`);
 const scenarioById = new Map(scenarios.map(({ value }) => [value.id, value]));
 const judgeSource = await loadJudgeSource(character);
+const runAt = new Date().toISOString();
 
 const cubanMarkers = [
   'asere',
@@ -249,11 +251,13 @@ for (const { value: candidate } of candidates) {
       user_input: scenario.user_input,
       risk: scenario.risk
     },
-    scores
+    scores,
+    source: judgeSource.source
   });
   const total = judgeContext.weighted_score;
 
   results.push({
+    metadata: judgmentMetadata(judgeContext, runAt),
     scenario_id: candidate.scenario_id,
     state: scenario.state,
     variant: candidate.variant,
@@ -273,17 +277,30 @@ const summary = results.reduce((acc, result) => {
 }, {});
 
 const average = results.reduce((sum, result) => sum + result.total, 0) / results.length;
-const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+const timestamp = runAt.replace(/[:.]/g, '-');
 const jsonPath = `out/${character}/reports/dry-run-${timestamp}.json`;
 const mdPath = `out/${character}/reports/dry-run-${timestamp}.md`;
 
-await writeText(jsonPath, `${JSON.stringify({ character, average, summary, results }, null, 2)}\n`);
+const reportMetadata = {
+  schema_version: 'dry_run_report.v1',
+  generated_at: runAt,
+  judge_version: results[0]?.metadata?.judge_version ?? null,
+  judge_context_version: results[0]?.metadata?.judge_context_version ?? null,
+  variables_sha256: results[0]?.metadata?.variables_sha256 ?? null,
+  rubric_sha256: results[0]?.metadata?.rubric_sha256 ?? null
+};
+
+await writeText(jsonPath, `${JSON.stringify({ character, metadata: reportMetadata, average, summary, results }, null, 2)}\n`);
 
 const rows = results
   .map((result) => `| ${result.scenario_id} | ${result.state} | ${result.variant} | ${result.total} | ${result.decision} | ${result.notes.join('; ')} |`)
   .join('\n');
 
 await writeText(mdPath, `# Dry run ${character}
+
+Judge version: ${reportMetadata.judge_version}
+
+Variables SHA256: ${reportMetadata.variables_sha256}
 
 Average score: ${average.toFixed(2)}
 

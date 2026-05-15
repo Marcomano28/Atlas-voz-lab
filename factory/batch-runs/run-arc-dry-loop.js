@@ -3,6 +3,7 @@ import { spawnSync } from 'node:child_process';
 import {
   buildArcJudgeContext,
   decideArcFromContext,
+  judgmentMetadata,
   loadJudgeSource
 } from '../../core/judges/build_judge_context.js';
 
@@ -15,6 +16,7 @@ if (!character) {
 
 const arcs = JSON.parse(await readText(`characters/${character}/scenarios/arcs.json`));
 const judgeSource = await loadJudgeSource(character);
+const runAt = new Date().toISOString();
 
 const resolutionStates = [
   'resolucion_complice',
@@ -165,11 +167,13 @@ const results = arcs.map((arc) => {
     arc,
     scores,
     clockArc,
-    clockSnapshot: clock.snapshot ?? null
+    clockSnapshot: clock.snapshot ?? null,
+    source: judgeSource.source
   });
   const total = judgeContext.weighted_score;
 
   return {
+    metadata: judgmentMetadata(judgeContext, runAt),
     id: arc.id,
     title: arc.title,
     variant: arc.variant,
@@ -190,17 +194,30 @@ const summary = results.reduce((acc, result) => {
 }, {});
 
 const average = results.reduce((sum, result) => sum + result.total, 0) / results.length;
-const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+const timestamp = runAt.replace(/[:.]/g, '-');
 const jsonPath = `out/${character}/arc-reports/arc-dry-run-${timestamp}.json`;
 const mdPath = `out/${character}/arc-reports/arc-dry-run-${timestamp}.md`;
 
-await writeText(jsonPath, `${JSON.stringify({ character, average, summary, results }, null, 2)}\n`);
+const reportMetadata = {
+  schema_version: 'arc_dry_run_report.v1',
+  generated_at: runAt,
+  judge_version: results[0]?.metadata?.judge_version ?? null,
+  judge_context_version: results[0]?.metadata?.judge_context_version ?? null,
+  variables_sha256: results[0]?.metadata?.variables_sha256 ?? null,
+  rubric_sha256: results[0]?.metadata?.rubric_sha256 ?? null
+};
+
+await writeText(jsonPath, `${JSON.stringify({ character, metadata: reportMetadata, average, summary, results }, null, 2)}\n`);
 
 const rows = results
   .map((result) => `| ${result.id} | ${result.title} | ${result.variant} | ${result.turns} | ${result.total} | ${result.decision} | ${result.clock_arc?.score ?? 'n/a'} | ${result.clock_arc?.distancia_min_m ?? 'n/a'}-${result.clock_arc?.distancia_max_m ?? 'n/a'}m | ${result.clock_arc?.pasos_atras ?? 'n/a'} | ${result.clock_arc?.placer_min ?? 'n/a'}-${result.clock_arc?.placer_max ?? 'n/a'} | ${result.clock_snapshot?.aliveness ?? 'n/a'} | ${result.clock_arc?.notes?.join('; ') ?? result.clock_error ?? ''} |`)
   .join('\n');
 
 await writeText(mdPath, `# Arc dry run ${character}
+
+Judge version: ${reportMetadata.judge_version}
+
+Variables SHA256: ${reportMetadata.variables_sha256}
 
 Average score: ${average.toFixed(2)}
 

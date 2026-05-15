@@ -12,6 +12,7 @@ Por defecto corre en dry-run sin dependencias externas. Para usar Anthropic:
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -25,6 +26,11 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from core.instruments.yanis_clock import YanisClock  # noqa: E402
+
+
+JUDGE_VERSION = "yanis_judge.user_actor_loop.v1"
+JUDGE_CONTEXT_VERSION = None
+CLOCK_VERSION = "yanis_clock.v1"
 
 
 ACTOR_PROFILES = {
@@ -182,9 +188,24 @@ JUDGE_FIELDS = [
 ]
 
 
-def load_variables() -> dict:
+def load_variables() -> tuple[dict, str]:
     path = ROOT / "characters" / "yanislaidis" / "variables.json"
-    return json.loads(path.read_text(encoding="utf-8"))
+    text = path.read_text(encoding="utf-8")
+    return json.loads(text), hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def judgment_metadata(judge_type: str, variables_sha256: str,
+                      judged_at: str | None = None) -> dict:
+    return {
+        "schema_version": "judgment_metadata.v1",
+        "judged_at": judged_at or datetime.now(timezone.utc).isoformat(),
+        "judge_version": JUDGE_VERSION,
+        "judge_context_version": JUDGE_CONTEXT_VERSION,
+        "judge_type": judge_type,
+        "variables_sha256": variables_sha256,
+        "rubric_sha256": None,
+        "clock_version": CLOCK_VERSION,
+    }
 
 
 def now_stamp() -> str:
@@ -274,7 +295,8 @@ def weighted_score(scores: dict, weights: dict) -> float:
     return round((weighted_total / max_total) * 10, 2)
 
 
-def heuristic_judge(user_msg: str, yanis_resp: str, clock_snapshot: dict, variables: dict) -> dict:
+def heuristic_judge(user_msg: str, yanis_resp: str, clock_snapshot: dict,
+                    variables: dict, variables_sha256: str) -> dict:
     text = yanis_resp.lower()
     has_cuba = any(token in text for token in ["asere", "mi amor", "barrio", "fula", "guagua", "saldo", "apag", "sombrita"])
     has_limit = not any(token in text for token in ["pinga", "singar", "mamar"])
@@ -300,6 +322,7 @@ def heuristic_judge(user_msg: str, yanis_resp: str, clock_snapshot: dict, variab
     else:
         decision = "rough_candidate"
     return {
+        "metadata": judgment_metadata("response", variables_sha256),
         "scores": scores,
         "weighted_score": round(weighted, 2),
         "decision": decision,
@@ -308,7 +331,8 @@ def heuristic_judge(user_msg: str, yanis_resp: str, clock_snapshot: dict, variab
 
 
 def live_judge(client: Any, user_msg: str, yanis_resp: str,
-               clock_snapshot: dict, history: list[dict], model: str, variables: dict) -> dict:
+               clock_snapshot: dict, history: list[dict], model: str,
+               variables: dict, variables_sha256: str) -> dict:
     context = "\n".join(
         f"[{item['role'].upper()}]: {item['content']}"
         for item in history[-6:]
@@ -341,10 +365,13 @@ Devuelve JSON con scores, weighted_score, decision y notes."""
         max_tokens=500,
         model=model,
     )
-    return json.loads(strip_json(text))
+    result = json.loads(strip_json(text))
+    result["metadata"] = judgment_metadata("response", variables_sha256)
+    return result
 
 
-def normalize_result_for_tasting(character: str, actor: str, turns: list[dict], arc: dict) -> dict:
+def normalize_result_for_tasting(character: str, actor: str, turns: list[dict],
+                                 arc: dict, variables_sha256: str) -> dict:
     decisions = {}
     for turn in turns:
         decision = turn["judge"]["decision"]
@@ -361,13 +388,24 @@ def normalize_result_for_tasting(character: str, actor: str, turns: list[dict], 
     total = sum(scores.values())
     decision = "strong_arc" if arc["score"] >= 7 else "review"
     summary = {decision: 1}
+    metadata = judgment_metadata("arc", variables_sha256)
 
     return {
         "character": character,
+        "metadata": {
+            "schema_version": "live_loop_report.v1",
+            "generated_at": metadata["judged_at"],
+            "judge_version": metadata["judge_version"],
+            "judge_context_version": metadata["judge_context_version"],
+            "variables_sha256": metadata["variables_sha256"],
+            "rubric_sha256": metadata["rubric_sha256"],
+            "clock_version": metadata["clock_version"],
+        },
         "average": total,
         "summary": summary,
         "results": [
             {
+                "metadata": metadata,
                 "id": f"{character}-live-{actor}-{now_stamp()}",
                 "title": f"Live loop: {actor}",
                 "variant": "alta",
@@ -397,7 +435,7 @@ def write_outputs(report: dict, output: Path | None, jsonl: Path | None) -> Path
 
 def run_loop(args: argparse.Namespace) -> dict:
     client = None if args.dry_run else get_anthropic_client()
-    variables = load_variables()
+    variables, variables_sha256 = load_variables()
     clock = YanisClock(actor_profile=args.actor)
     actor_history: list[dict] = []
     yanis_history: list[dict] = []
@@ -438,9 +476,9 @@ def run_loop(args: argparse.Namespace) -> dict:
         yanis_history.append({"role": "assistant", "content": yanis_resp})
 
         if args.dry_run:
-            judge = heuristic_judge(actor_msg, yanis_resp, clock_snapshot, variables)
+            judge = heuristic_judge(actor_msg, yanis_resp, clock_snapshot, variables, variables_sha256)
         else:
-            judge = live_judge(client, actor_msg, yanis_resp, clock_snapshot, yanis_history, args.model, variables)
+            judge = live_judge(client, actor_msg, yanis_resp, clock_snapshot, yanis_history, args.model, variables, variables_sha256)
             time.sleep(args.pause)
 
         actor_history.append({
@@ -457,7 +495,7 @@ def run_loop(args: argparse.Namespace) -> dict:
         })
 
     arc = clock.arc_quality()
-    report = normalize_result_for_tasting("yanislaidis", args.actor, turns, arc)
+    report = normalize_result_for_tasting("yanislaidis", args.actor, turns, arc, variables_sha256)
     report["run"] = {
         "actor": args.actor,
         "turns": args.turns,

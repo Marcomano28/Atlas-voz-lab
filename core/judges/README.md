@@ -12,6 +12,18 @@ variables.json
   -> score + diagnostico + nota de receta
 ```
 
+Cada resultado debe guardar:
+
+```txt
+metadata.judge_version
+metadata.judge_context_version
+metadata.variables_sha256
+metadata.rubric_sha256
+```
+
+Esto permite saber, meses despues, que version del catador aprobo o rechazo una
+entrada del dataset.
+
 ## Archivos
 
 - `build_judge_context.js`: construye paquetes de juicio desde el ADN del personaje.
@@ -41,4 +53,3 @@ Context-aware. Compara turnos, memoria, patrones y trayectoria.
 ### Judge v3
 
 Calibrado contra gold humano y auditorias del supervisor.
-

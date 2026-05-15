@@ -73,6 +73,15 @@ resuelve bien una situacion concreta.
 
 ```json
 {
+  "metadata": {
+    "schema_version": "gold_phrase.v1",
+    "source": "human_supervisor_seed",
+    "created_at": "YYYY-MM-DD",
+    "judge_version": null,
+    "judge_context_version": null,
+    "variables_sha256": null,
+    "rubric_sha256": null
+  },
   "state": "desden_nevera",
   "temperature": "alta",
   "user_trigger": "usuario entra vulgar o transaccional",
@@ -86,6 +95,10 @@ resuelve bien una situacion concreta.
   "risk": "si se exagera puede sonar clasista o demasiado dura"
 }
 ```
+
+`judge_version` empieza como `null` cuando la frase nace como semilla humana. Se
+rellena cuando pasa por el laboratorio y queda aprobada/rechazada por una version
+concreta del juez.
 
 ### Campos disponibles
 
@@ -520,6 +533,15 @@ Un dialogo gold no es una coleccion de frases buenas. Es una conversacion con:
 
 ```json
 {
+  "metadata": {
+    "schema_version": "gold_arc.v1",
+    "source": "human_supervisor_seed",
+    "created_at": "YYYY-MM-DD",
+    "judge_version": null,
+    "judge_context_version": null,
+    "variables_sha256": null,
+    "rubric_sha256": null
+  },
   "id": "yanis-gold-arc-001",
   "title": "Vulgaridad con redencion",
   "why_gold": "Muestra nevera, limite, paso atras, redencion y reapertura controlada.",
