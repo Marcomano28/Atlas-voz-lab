@@ -57,6 +57,12 @@ Mando:
 Arrancar con comandos:
 
 ```bash
+npm run lab:dashboard
+```
+
+Alias historico:
+
+```bash
 npm run control:tasting
 ```
 

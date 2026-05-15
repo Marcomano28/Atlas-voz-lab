@@ -115,6 +115,7 @@ npm run dry:yanis
 npm run audit:yanis
 npm run arc:yanis
 npm run curate -- out/yanislaidis/reports/<report>.json
+npm run lab:dashboard
 npm run control:tasting
 ```
 
@@ -127,5 +128,7 @@ de prompt o modelo.
 `characters/<personaje>/datasets/curation/`. No escribe en `gold`: el oro requiere
 decision humana.
 
-`control:tasting` abre el primer puesto de control/mando local para cargar
+`lab:dashboard` abre el primer puesto de control/mando local para cargar
 reportes, ejecutar tandas y curar resultados desde botones.
+
+`control:tasting` queda como alias historico del mismo panel.
