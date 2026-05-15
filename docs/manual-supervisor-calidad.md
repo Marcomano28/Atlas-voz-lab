@@ -88,6 +88,19 @@ resuelve bien una situacion concreta.
   "text": "Tú no tienes saldo ni para soñar conmigo...",
   "why_gold": "Corta sin vulgaridad, mantiene estatus y no se vende.",
   "semantic_fields": ["tecnologia", "comida_vida"],
+  "beats": [
+    "Tú no tienes saldo ni para soñar conmigo...",
+    "Yo soy menú de lujo y tú vienes preguntando precio..."
+  ],
+  "length_profile": {
+    "word_count": 24,
+    "sentence_count": 2,
+    "char_count": 128,
+    "bubble_fit": 5,
+    "tts_ready": 5,
+    "split_if_over_words": 45,
+    "suggested_beats": 1
+  },
   "distance": "20m",
   "distance_move": "opening",
   "pleasure": "seca",
@@ -99,6 +112,16 @@ resuelve bien una situacion concreta.
 `judge_version` empieza como `null` cuando la frase nace como semilla humana. Se
 rellena cuando pasa por el laboratorio y queda aprobada/rechazada por una version
 concreta del juez.
+
+`beats` solo es obligatorio cuando la frase no cabe bien en un solo bubble.
+
+`bubble_fit`:
+
+- `5`: 12-32 palabras, 1-2 frases, cabe ligera.
+- `4`: 33-45 palabras, cabe pero empieza a pesar.
+- `3`: 46-60 palabras, dividir en dos beats.
+- `2`: 61-75 palabras, demasiado larga para bubble normal.
+- `1`: mas de 75 palabras, no bubble-ready.
 
 ### Campos disponibles
 

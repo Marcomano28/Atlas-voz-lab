@@ -30,6 +30,9 @@ const cubanMarkers = [
   'almendr',
   'astilla',
   'wifi',
+  'habana',
+  'ven acá',
+  'calor',
   'qué bolá',
   'que bola',
   'candela',
@@ -49,7 +52,10 @@ const yanisMarkers = [
   'corazón',
   'cabeza',
   'vitrina',
-  'carrocería'
+  'carrocería',
+  'arrímate',
+  'maquillaje',
+  'cimientos'
 ];
 
 const hardVulgarity = [
@@ -103,7 +109,11 @@ function scoreTrigger(text, scenario) {
     return lower.includes('insistencia') || lower.includes('2g') || lower.includes('cobertura') ? 5 : 3;
   }
   if (state === 'astilla_resolver') {
-    return lower.includes('astilla') || lower.includes('aserrín') || lower.includes('wi-fi') ? 5 : 3;
+    return lower.includes('astilla')
+      || lower.includes('aserrín')
+      || lower.includes('wi-fi')
+      || lower.includes('cimientos')
+      || lower.includes('aparentar') ? 5 : 3;
   }
   if (state === 'confidencia_filosofica') {
     return lower.includes('sabes') || lower.includes('corazón') || lower.includes('capó') ? 5 : 3;
@@ -176,6 +186,11 @@ function scoreDistanceGeometry(text, scenario) {
   if (scenario.state === 'confidencia_filosofica') {
     return lower.includes('sabes') || lower.includes('corazón') || lower.includes('voz') ? 4 : 3;
   }
+  if (scenario.state === 'astilla_resolver') {
+    return lower.includes('arrímate')
+      || lower.includes('no te pegues')
+      || lower.includes('cimientos') ? 5 : 3;
+  }
   return 3;
 }
 
@@ -187,6 +202,9 @@ function scoreScenicPleasure(text, scenario) {
   }
   if (lower.includes('candela') || lower.includes('me gusta') || lower.includes('juego') || lower.includes('brillo')) {
     return 5;
+  }
+  if (scenario.state === 'astilla_resolver' && (lower.includes('arrímate') || lower.includes('maquillaje'))) {
+    return 4;
   }
   if (words >= 18 && scenario.state === 'seduccion_alianza') return 4;
   if (scenario.state === 'confidencia_filosofica') return 4;
