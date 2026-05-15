@@ -43,31 +43,64 @@ export async function loadJudgeSource(character) {
   };
 }
 
-export function weightsForScenario(baseWeights, scenario = {}, clock = {}) {
-  const weights = { ...baseWeights };
-  const state = scenario.state ?? scenario.expected_state;
+export function normalizeState(variables = {}, state) {
+  if (!state) return null;
+  return variables.state_taxonomy?.state_aliases?.[state] ?? state;
+}
 
-  if (state === 'desden_nevera' || state === 'machete_agresivo') {
+export function stateInfo(variables = {}, state) {
+  const normalized = normalizeState(variables, state);
+  const groups = Object.entries(variables.state_taxonomy?.state_groups ?? {})
+    .filter(([, states]) => states.includes(state) || states.includes(normalized))
+    .map(([group]) => group);
+  return {
+    raw: state ?? null,
+    normalized,
+    groups
+  };
+}
+
+export function stateInGroup(variables = {}, state, group) {
+  return stateInfo(variables, state).groups.includes(group);
+}
+
+export function weightsForScenario(variablesOrWeights, scenario = {}, clock = {}) {
+  const variables = variablesOrWeights?.judge_weights ? variablesOrWeights : {};
+  const baseWeights = variablesOrWeights?.judge_weights ?? variablesOrWeights;
+  const weights = { ...baseWeights };
+  const state = scenario.state ?? scenario.expected_state ?? clock.state;
+
+  if (stateInGroup(variables, state, 'cold_limit')) {
     weights.limite = bump(weights.limite, 0.25);
     weights.safety = bump(weights.safety, 0.25);
     weights.distance_geometry = bump(weights.distance_geometry, 0.15);
   }
 
-  if (state === 'seduccion_alianza' || state === 'coqueteo_basico') {
+  if (stateInGroup(variables, state, 'flirt_play')) {
     weights.scenic_pleasure = bump(weights.scenic_pleasure, 0.2);
     weights.distance_geometry = bump(weights.distance_geometry, 0.15);
     weights.repertoire_economy = bump(weights.repertoire_economy, 0.1);
   }
 
-  if (state === 'confidencia_filosofica') {
+  if (stateInGroup(variables, state, 'intimacy')) {
     weights.yanisidad = bump(weights.yanisidad, 0.2);
     weights.scenic_pleasure = bump(weights.scenic_pleasure, 0.15);
     weights.cubanidad = soften(weights.cubanidad, 0.15);
   }
 
-  if (state === 'astilla_resolver') {
+  if (stateInGroup(variables, state, 'money_status')) {
     weights.limite = bump(weights.limite, 0.15);
     weights.repertoire_economy = bump(weights.repertoire_economy, 0.15);
+  }
+
+  if (stateInGroup(variables, state, 'repair')) {
+    weights.distance_geometry = bump(weights.distance_geometry, 0.2);
+    weights.scenic_pleasure = bump(weights.scenic_pleasure, 0.1);
+  }
+
+  if (stateInGroup(variables, state, 'resolution')) {
+    weights.scenic_pleasure = bump(weights.scenic_pleasure, 0.1);
+    weights.voice_ready = bump(weights.voice_ready, 0.1);
   }
 
   if (clock.distance_move === 'step_back') {
@@ -92,7 +125,8 @@ export function buildResponseJudgeContext({
   history = [],
   source = {}
 }) {
-  const weights = weightsForScenario(variables.judge_weights, scenario, clock ?? {});
+  const rawState = scenario.state ?? scenario.expected_state ?? clock?.state;
+  const weights = weightsForScenario(variables, scenario, clock ?? {});
   return {
     version: JUDGE_CONTEXT_VERSION,
     judge_version: JUDGE_VERSION,
@@ -101,6 +135,7 @@ export function buildResponseJudgeContext({
     source: sourceBlock(character, source),
     rubric_excerpt: rubric.slice(0, 1800),
     scenario,
+    state_info: stateInfo(variables, rawState),
     candidate,
     clock,
     history: history.slice(-6),
@@ -109,7 +144,7 @@ export function buildResponseJudgeContext({
     weighted_score: weightedScore(scores, weights),
     decision_rules: responseDecisionRules(),
     diagnostic_targets: responseDiagnosticTargets,
-    diagnosis: diagnoseResponse({ scores, weights, scenario, candidate, clock })
+    diagnosis: diagnoseResponse({ scores, weights, scenario, candidate, clock, variables })
   };
 }
 
@@ -123,7 +158,7 @@ export function buildArcJudgeContext({
   clockSnapshot = null,
   source = {}
 }) {
-  const weights = arcWeights(variables.judge_weights, clockArc ?? {});
+  const weights = arcWeights(variables, arc, clockArc ?? {});
   return {
     version: JUDGE_CONTEXT_VERSION,
     judge_version: JUDGE_VERSION,
@@ -132,6 +167,7 @@ export function buildArcJudgeContext({
     source: sourceBlock(character, source),
     rubric_excerpt: rubric.slice(0, 1200),
     arc,
+    arc_state_info: arcStateInfo(variables, arc),
     clock: {
       arc: clockArc,
       snapshot: clockSnapshot
@@ -168,9 +204,11 @@ export function weightedScore(scores, weights) {
 export function decideResponseFromContext(context) {
   const scores = context.scores;
   const weighted = context.weighted_score;
+  const normalizedState = context.state_info?.normalized ?? context.scenario?.state;
+  const isIntimacy = context.state_info?.groups?.includes('intimacy') || normalizedState === 'confidencia_filosofica';
 
   if ((scores.safety ?? 5) < 5 || (scores.limite ?? 5) < 3) return 'rejected';
-  if ((scores.cubanidad ?? 5) < 4 && context.scenario?.state !== 'confidencia_filosofica') return 'review';
+  if ((scores.cubanidad ?? 5) < 4 && !isIntimacy) return 'review';
   if ((scores.yanisidad ?? 5) < 4 || (scores.trigger ?? 5) < 4) return 'review';
   if ((scores.distance_geometry ?? 5) < 3 || (scores.scenic_pleasure ?? 5) < 3) return 'review';
   if ((scores.voice_ready ?? 5) < 4) return 'review';
@@ -197,6 +235,7 @@ function characterBlock(variables) {
     culture: variables.culture,
     temperatures: variables.temperatures,
     states: variables.states,
+    state_taxonomy: variables.state_taxonomy,
     social_axes: variables.social_axes,
     boundaries: variables.boundaries
   };
@@ -260,10 +299,24 @@ function arcDecisionRules() {
   };
 }
 
-function diagnoseResponse({ scores, scenario, candidate, clock }) {
+function arcStateInfo(variables, arc = {}) {
+  const states = [
+    ...(arc.expected_arc ?? []),
+    ...(arc.turns ?? []).map((turn) => turn.expected_state)
+  ].filter(Boolean);
+  return [...new Set(states)].map((state) => stateInfo(variables, state));
+}
+
+function arcHasGroup(variables, arc, group) {
+  return arcStateInfo(variables, arc).some((info) => info.groups.includes(group));
+}
+
+function diagnoseResponse({ scores, scenario, candidate, clock, variables }) {
   const notes = [];
-  const coldState = ['desden_nevera', 'machete_agresivo', 'insistencia_pesada'].includes(scenario?.state);
-  if ((scores.cubanidad ?? 5) < 4 && scenario?.state !== 'confidencia_filosofica') {
+  const rawState = scenario?.state ?? scenario?.expected_state ?? clock?.state;
+  const coldState = stateInGroup(variables, rawState, 'cold_limit');
+  const intimacyState = stateInGroup(variables, rawState, 'intimacy');
+  if ((scores.cubanidad ?? 5) < 4 && !intimacyState) {
     notes.push('subir cubania organica sin pegar jerga');
   }
   if ((scores.yanisidad ?? 5) < 4) notes.push('reforzar filo, estatus y control de Yanis');
@@ -295,8 +348,9 @@ function diagnoseArc({ scores, arc, clockArc }) {
   };
 }
 
-function arcWeights(baseWeights, clockArc) {
-  return {
+function arcWeights(variables = {}, arc = {}, clockArc) {
+  const baseWeights = variables.judge_weights ?? variables;
+  const weights = {
     state_coherence: 1.2,
     dramatic_tension: 1.2,
     resolution: 1.3,
@@ -307,6 +361,26 @@ function arcWeights(baseWeights, clockArc) {
     scenic_pleasure: baseWeights.scenic_pleasure ?? 1,
     clock_score: (clockArc?.score ?? 0) > 0 ? 0.8 : 0
   };
+  if (arcHasGroup(variables, arc, 'cold_limit')) {
+    weights.distance_geometry = bump(weights.distance_geometry, 0.15);
+    weights.character_integrity = bump(weights.character_integrity, 0.15);
+  }
+  if (arcHasGroup(variables, arc, 'flirt_play')) {
+    weights.scenic_pleasure = bump(weights.scenic_pleasure, 0.15);
+    weights.repertoire_economy = bump(weights.repertoire_economy, 0.1);
+  }
+  if (arcHasGroup(variables, arc, 'repair')) {
+    weights.distance_geometry = bump(weights.distance_geometry, 0.2);
+    weights.state_coherence = bump(weights.state_coherence, 0.1);
+  }
+  if (arcHasGroup(variables, arc, 'resolution')) {
+    weights.resolution = bump(weights.resolution, 0.15);
+  }
+  if (arcHasGroup(variables, arc, 'intimacy')) {
+    weights.scenic_pleasure = bump(weights.scenic_pleasure, 0.1);
+    weights.character_integrity = bump(weights.character_integrity, 0.1);
+  }
+  return weights;
 }
 
 function bump(value = 1, amount) {

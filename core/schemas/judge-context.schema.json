@@ -27,8 +27,27 @@
       }
     },
     "scenario": { "type": "object" },
+    "state_info": {
+      "type": "object",
+      "properties": {
+        "raw": { "type": ["string", "null"] },
+        "normalized": { "type": ["string", "null"] },
+        "groups": { "type": "array", "items": { "type": "string" } }
+      }
+    },
     "candidate": { "type": "object" },
     "arc": { "type": "object" },
+    "arc_state_info": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "raw": { "type": ["string", "null"] },
+          "normalized": { "type": ["string", "null"] },
+          "groups": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
     "clock": { "type": "object" },
     "history": { "type": "array" },
     "source": {

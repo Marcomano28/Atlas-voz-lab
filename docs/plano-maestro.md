@@ -218,6 +218,23 @@ el laboratorio debe evaluar:
 - uso economico del repertorio;
 - resolucion satisfactoria.
 
+### Taxonomia de estados
+
+Los estados del dataset, los arcos y el reloj no deben crecer con nombres sueltos.
+`variables.json` debe declarar:
+
+```txt
+states
+arc_states
+clock_states
+state_aliases
+state_groups
+```
+
+Los pesos dinamicos deben leer familias dramaticas, no cadenas aisladas. Asi
+`machete_freno`, `machete_agresivo` y `desden_nevera` pueden activar la misma
+familia de limite frio cuando corresponde.
+
 ### Juez como catador entrenable
 
 El juez no debe vivir como prompt generico. Debe leer `variables.json` como fuente

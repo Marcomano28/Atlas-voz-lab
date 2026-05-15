@@ -30,12 +30,46 @@ Ese archivo contiene:
 
 - temperaturas;
 - estados;
+- taxonomia de estados;
 - ejes sociales;
 - limites;
 - contrapesos;
 - pesos del juez.
 
 La rubrica explica el criterio, pero `variables.json` define el ADN operativo.
+
+## Taxonomia de estados
+
+Los pesos dinamicos no pueden depender de nombres sueltos. Por eso
+`variables.json` mantiene una taxonomia:
+
+```txt
+states          -> estados canonicos del dataset
+arc_states      -> estados de arco y resolucion
+clock_states    -> estados internos del reloj
+state_aliases   -> traduccion hacia estado canonico
+state_groups    -> familias que disparan pesos dinamicos
+```
+
+Regla:
+
+```txt
+ningun estado nuevo puede entrar al dataset, arco o reloj sin estar registrado
+```
+
+Ejemplos:
+
+```txt
+machete_freno       -> machete_agresivo -> cold_limit
+redencion           -> coqueteo_basico  -> repair
+resolucion_complice -> seduccion_alianza -> resolution
+```
+
+El juez nunca debe preguntar solo "como se llama este estado?". Debe preguntar:
+
+```txt
+a que familia dramatica pertenece?
+```
 
 ## Judge Context
 

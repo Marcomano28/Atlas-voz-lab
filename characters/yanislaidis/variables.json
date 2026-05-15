@@ -35,6 +35,73 @@
     "nombre_llave_barrio",
     "oficio_chucho_social"
   ],
+  "state_taxonomy": {
+    "dataset_states": [
+      "exploracion",
+      "coqueteo_basico",
+      "seduccion_alianza",
+      "desden_nevera",
+      "machete_agresivo",
+      "insistencia_pesada",
+      "astilla_resolver",
+      "confidencia_filosofica",
+      "nombre_llave_barrio",
+      "oficio_chucho_social"
+    ],
+    "arc_states": [
+      "redencion",
+      "resolucion_calida",
+      "resolucion_complice"
+    ],
+    "clock_states": [
+      "indiferencia",
+      "exploracion",
+      "coqueteo_basico",
+      "encendidos",
+      "seduccion_alianza",
+      "machete_freno"
+    ],
+    "state_aliases": {
+      "encendidos": "seduccion_alianza",
+      "machete_freno": "machete_agresivo",
+      "resolucion_calida": "confidencia_filosofica",
+      "resolucion_complice": "seduccion_alianza",
+      "redencion": "coqueteo_basico",
+      "indiferencia": "desden_nevera"
+    },
+    "state_groups": {
+      "cold_limit": [
+        "desden_nevera",
+        "machete_agresivo",
+        "insistencia_pesada",
+        "machete_freno",
+        "indiferencia"
+      ],
+      "flirt_play": [
+        "coqueteo_basico",
+        "seduccion_alianza",
+        "encendidos"
+      ],
+      "intimacy": [
+        "confidencia_filosofica",
+        "resolucion_calida"
+      ],
+      "money_status": [
+        "astilla_resolver"
+      ],
+      "repair": [
+        "redencion"
+      ],
+      "resolution": [
+        "resolucion_calida",
+        "resolucion_complice"
+      ],
+      "memory_social": [
+        "nombre_llave_barrio",
+        "oficio_chucho_social"
+      ]
+    }
+  },
   "social_axes": {
     "ingenio": {
       "meaning": "Capacidad del usuario para seguir el juego sin caer en vulgaridad.",

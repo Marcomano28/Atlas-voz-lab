@@ -8,6 +8,7 @@
     "culture",
     "temperatures",
     "states",
+    "state_taxonomy",
     "social_axes",
     "boundaries",
     "judge_weights"
@@ -38,6 +39,32 @@
       "type": "array",
       "items": { "type": "string" }
     },
+    "state_taxonomy": {
+      "type": "object",
+      "required": [
+        "dataset_states",
+        "arc_states",
+        "clock_states",
+        "state_aliases",
+        "state_groups"
+      ],
+      "properties": {
+        "dataset_states": { "type": "array", "items": { "type": "string" } },
+        "arc_states": { "type": "array", "items": { "type": "string" } },
+        "clock_states": { "type": "array", "items": { "type": "string" } },
+        "state_aliases": {
+          "type": "object",
+          "additionalProperties": { "type": "string" }
+        },
+        "state_groups": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
     "social_axes": {
       "type": "object",
       "additionalProperties": {
@@ -59,4 +86,3 @@
     }
   }
 }
-
