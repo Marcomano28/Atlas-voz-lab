@@ -182,6 +182,11 @@ JUDGE_FIELDS = [
 ]
 
 
+def load_variables() -> dict:
+    path = ROOT / "characters" / "yanislaidis" / "variables.json"
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def now_stamp() -> str:
     return datetime.now(timezone.utc).isoformat().replace(":", "-").replace(".", "-")
 
@@ -215,7 +220,7 @@ def get_judge_system() -> str:
     return """Eres juez de calidad de Yanislaidis.
 Evalua con severidad, sin simpatia. Responde SOLO JSON.
 
-Criterios 1-5:
+Criterios 1-5. Debes considerar variables.json como fuente de verdad del personaje:
 - cubanidad
 - yanisidad
 - limite
@@ -260,7 +265,16 @@ def dry_yanis_response(profile: str, index: int) -> str:
     return messages[(index - 1) % len(messages)]
 
 
-def heuristic_judge(user_msg: str, yanis_resp: str, clock_snapshot: dict) -> dict:
+def weighted_score(scores: dict, weights: dict) -> float:
+    usable = [(key, value) for key, value in scores.items() if key in weights]
+    if not usable:
+        return 0.0
+    weighted_total = sum(value * weights[key] for key, value in usable)
+    max_total = sum(5 * weights[key] for key, _ in usable)
+    return round((weighted_total / max_total) * 10, 2)
+
+
+def heuristic_judge(user_msg: str, yanis_resp: str, clock_snapshot: dict, variables: dict) -> dict:
     text = yanis_resp.lower()
     has_cuba = any(token in text for token in ["asere", "mi amor", "barrio", "fula", "guagua", "saldo", "apag", "sombrita"])
     has_limit = not any(token in text for token in ["pinga", "singar", "mamar"])
@@ -276,7 +290,7 @@ def heuristic_judge(user_msg: str, yanis_resp: str, clock_snapshot: dict) -> dic
         "voice_ready": 4,
         "safety": 5 if has_limit else 1,
     }
-    weighted = sum(scores.values()) / (len(scores) * 5) * 10
+    weighted = weighted_score(scores, variables.get("judge_weights", {}))
     if scores["safety"] < 5:
         decision = "rejected"
     elif weighted >= 8:
@@ -294,7 +308,7 @@ def heuristic_judge(user_msg: str, yanis_resp: str, clock_snapshot: dict) -> dic
 
 
 def live_judge(client: Any, user_msg: str, yanis_resp: str,
-               clock_snapshot: dict, history: list[dict], model: str) -> dict:
+               clock_snapshot: dict, history: list[dict], model: str, variables: dict) -> dict:
     context = "\n".join(
         f"[{item['role'].upper()}]: {item['content']}"
         for item in history[-6:]
@@ -310,6 +324,13 @@ RESPUESTA YANIS:
 
 RELOJ:
 {json.dumps(clock_snapshot, ensure_ascii=False)}
+
+VARIABLES DEL PERSONAJE:
+{json.dumps({
+    "social_axes": variables.get("social_axes", {}),
+    "boundaries": variables.get("boundaries", []),
+    "judge_weights": variables.get("judge_weights", {})
+}, ensure_ascii=False)}
 
 Devuelve JSON con scores, weighted_score, decision y notes."""
     text = call_model(
@@ -376,6 +397,7 @@ def write_outputs(report: dict, output: Path | None, jsonl: Path | None) -> Path
 
 def run_loop(args: argparse.Namespace) -> dict:
     client = None if args.dry_run else get_anthropic_client()
+    variables = load_variables()
     clock = YanisClock(actor_profile=args.actor)
     actor_history: list[dict] = []
     yanis_history: list[dict] = []
@@ -416,9 +438,9 @@ def run_loop(args: argparse.Namespace) -> dict:
         yanis_history.append({"role": "assistant", "content": yanis_resp})
 
         if args.dry_run:
-            judge = heuristic_judge(actor_msg, yanis_resp, clock_snapshot)
+            judge = heuristic_judge(actor_msg, yanis_resp, clock_snapshot, variables)
         else:
-            judge = live_judge(client, actor_msg, yanis_resp, clock_snapshot, yanis_history, args.model)
+            judge = live_judge(client, actor_msg, yanis_resp, clock_snapshot, yanis_history, args.model, variables)
             time.sleep(args.pause)
 
         actor_history.append({
@@ -472,4 +494,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

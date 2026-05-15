@@ -1,5 +1,10 @@
 import { readText, writeText } from '../../core/lib.js';
 import { spawnSync } from 'node:child_process';
+import {
+  buildArcJudgeContext,
+  decideArcFromContext,
+  loadJudgeSource
+} from '../../core/judges/build_judge_context.js';
 
 const character = process.argv[2];
 
@@ -9,6 +14,7 @@ if (!character) {
 }
 
 const arcs = JSON.parse(await readText(`characters/${character}/scenarios/arcs.json`));
+const judgeSource = await loadJudgeSource(character);
 
 const resolutionStates = [
   'resolucion_complice',
@@ -86,11 +92,25 @@ function scoreCharacterIntegrity(arc) {
   return clamp(3 + Number(hasLimit) + Number(hasYanisLogic));
 }
 
-function decide(total, scores) {
-  if (scores.resolution < 4 || scores.state_coherence < 4) return 'review';
-  if (total >= 27) return 'strong_arc';
-  if (total >= 22) return 'review';
-  return 'weak_arc';
+function scoreDistanceGeometryFromClock(clockArc) {
+  if (!clockArc) return 2;
+  if ((clockArc.rango_distancia_m ?? 0) >= 4 || (clockArc.pasos_atras ?? 0) > 0) return 5;
+  if ((clockArc.rango_distancia_m ?? 0) >= 2) return 4;
+  if ((clockArc.rango_distancia_m ?? 0) >= 1) return 3;
+  return 2;
+}
+
+function scoreScenicPleasureFromClock(clockArc) {
+  if (!clockArc) return 2;
+  if ((clockArc.placer_max ?? 0) >= 7 && (clockArc.rango_placer ?? 0) >= 2) return 5;
+  if ((clockArc.placer_max ?? 0) >= 5.5 || (clockArc.rango_placer ?? 0) >= 1.5) return 4;
+  if ((clockArc.placer_max ?? 0) >= 4) return 3;
+  return 2;
+}
+
+function scoreClockArc(clockArc) {
+  if (!clockArc) return 1;
+  return clamp(Math.round((clockArc.score / 10) * 5));
 }
 
 function runClock(arc) {
@@ -126,15 +146,28 @@ function runClock(arc) {
 
 const results = arcs.map((arc) => {
   const clock = runClock(arc);
+  const clockArc = clock.arc_quality ?? null;
   const scores = {
     state_coherence: scoreStateCoherence(arc),
     dramatic_tension: scoreDramaticTension(arc),
     resolution: scoreResolution(arc),
     memory_continuity: scoreMemoryContinuity(arc),
     repertoire_economy: scoreRepertoireEconomy(arc),
-    character_integrity: scoreCharacterIntegrity(arc)
+    character_integrity: scoreCharacterIntegrity(arc),
+    distance_geometry: scoreDistanceGeometryFromClock(clockArc),
+    scenic_pleasure: scoreScenicPleasureFromClock(clockArc),
+    clock_score: scoreClockArc(clockArc)
   };
-  const total = Object.values(scores).reduce((sum, score) => sum + score, 0);
+  const judgeContext = buildArcJudgeContext({
+    character,
+    variables: judgeSource.variables,
+    rubric: judgeSource.rubric,
+    arc,
+    scores,
+    clockArc,
+    clockSnapshot: clock.snapshot ?? null
+  });
+  const total = judgeContext.weighted_score;
 
   return {
     id: arc.id,
@@ -142,9 +175,10 @@ const results = arcs.map((arc) => {
     variant: arc.variant,
     turns: arc.turns.length,
     total,
-    decision: decide(total, scores),
+    decision: decideArcFromContext(judgeContext),
     scores,
-    clock_arc: clock.arc_quality ?? null,
+    judge_context: judgeContext,
+    clock_arc: clockArc,
     clock_snapshot: clock.snapshot ?? null,
     clock_error: clock.error ?? null
   };

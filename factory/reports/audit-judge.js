@@ -38,6 +38,8 @@ const scoreKeys = [
   'trigger',
   'ritmo_oral',
   'repertoire_economy',
+  'distance_geometry',
+  'scenic_pleasure',
   'no_repetition',
   'safety',
   'voice_ready'

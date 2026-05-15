@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Atlas Voz Judge Context",
+  "type": "object",
+  "required": [
+    "version",
+    "judge_type",
+    "character",
+    "weights",
+    "decision_rules",
+    "diagnostic_targets"
+  ],
+  "properties": {
+    "version": { "type": "string" },
+    "judge_type": { "enum": ["response", "arc"] },
+    "character": {
+      "type": "object",
+      "required": ["id", "display_name", "culture", "social_axes", "boundaries"],
+      "properties": {
+        "id": { "type": "string" },
+        "display_name": { "type": "string" },
+        "culture": { "type": "object" },
+        "social_axes": { "type": "object" },
+        "boundaries": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "scenario": { "type": "object" },
+    "candidate": { "type": "object" },
+    "arc": { "type": "object" },
+    "clock": { "type": "object" },
+    "history": { "type": "array" },
+    "weights": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "decision_rules": {
+      "type": "object",
+      "required": ["reject_if", "review_if", "approve_if"],
+      "properties": {
+        "reject_if": { "type": "array", "items": { "type": "string" } },
+        "review_if": { "type": "array", "items": { "type": "string" } },
+        "approve_if": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "diagnostic_targets": { "type": "array", "items": { "type": "string" } }
+  }
+}
+

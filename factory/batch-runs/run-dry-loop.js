@@ -1,4 +1,9 @@
 import { readJsonl, writeText } from '../../core/lib.js';
+import {
+  buildResponseJudgeContext,
+  decideResponseFromContext,
+  loadJudgeSource
+} from '../../core/judges/build_judge_context.js';
 
 const character = process.argv[2];
 
@@ -11,6 +16,7 @@ const characterRoot = `characters/${character}`;
 const scenarios = await readJsonl(`${characterRoot}/scenarios/core.jsonl`);
 const candidates = await readJsonl(`${characterRoot}/datasets/candidates/dry_run_seed.jsonl`);
 const scenarioById = new Map(scenarios.map(({ value }) => [value.id, value]));
+const judgeSource = await loadJudgeSource(character);
 
 const cubanMarkers = [
   'asere',
@@ -157,32 +163,56 @@ function scoreNoRepetition(text) {
   return 5;
 }
 
+function scoreDistanceGeometry(text, scenario) {
+  const lower = text.toLowerCase();
+  if (scenario.state === 'desden_nevera' || scenario.state === 'machete_agresivo') {
+    return lower.includes('camina') || lower.includes('banco') || lower.includes('puerta') || lower.includes('bloquear') ? 5 : 4;
+  }
+  if (scenario.state === 'seduccion_alianza') {
+    return lower.includes('curva') || lower.includes('base') || lower.includes('cerca') ? 4 : 3;
+  }
+  if (scenario.state === 'confidencia_filosofica') {
+    return lower.includes('sabes') || lower.includes('corazón') || lower.includes('voz') ? 4 : 3;
+  }
+  return 3;
+}
+
+function scoreScenicPleasure(text, scenario) {
+  const words = text.split(/\s+/).filter(Boolean).length;
+  const lower = text.toLowerCase();
+  if (scenario.state === 'desden_nevera' || scenario.state === 'machete_agresivo') {
+    return 3;
+  }
+  if (lower.includes('candela') || lower.includes('me gusta') || lower.includes('juego') || lower.includes('brillo')) {
+    return 5;
+  }
+  if (words >= 18 && scenario.state === 'seduccion_alianza') return 4;
+  if (scenario.state === 'confidencia_filosofica') return 4;
+  return 3;
+}
+
 function scoreSafety(text) {
   if (containsAny(text, hardVulgarity) > 0) return 1;
   return 5;
 }
 
-function decide(total, scores) {
-  if (scores.safety < 5 || scores.limite < 3) return 'rejected';
-  if (scores.cubanidad < 4 || scores.yanisidad < 4 || scores.trigger < 4) return 'review';
-  if (scores.voice_ready < 4) return 'review';
-  if (total >= 34) return 'approved_candidate';
-  if (total >= 29) return 'review';
-  if (total >= 25) return 'review';
-  if (total >= 18) return 'rough_candidate';
-  return 'rejected';
-}
-
-function notesFor(scores, text) {
+function notesFor(scores, text, context) {
   const notes = [];
+  const coldState = ['desden_nevera', 'machete_agresivo', 'insistencia_pesada'].includes(context?.scenario?.state);
   if (scores.cubanidad < 4) notes.push('subir marcadores cubanos organicos');
   if (scores.yanisidad < 4) notes.push('reforzar filo/seduccion/control de Yanis');
   if (scores.repertoire_economy < 4) notes.push('reserva semantica saturada; cambiar de campo o usar callback intencional');
+  if (scores.distance_geometry < 4) notes.push('distancia dramatica poco clara');
+  if (!coldState && scores.scenic_pleasure < 4) notes.push('placer escenico bajo o no visible');
   if (scores.no_repetition < 4) notes.push('revisar repeticion interna de imagenes');
   if (scores.safety < 5) notes.push('riesgo de seguridad o vulgaridad');
   if (scores.voice_ready < 4) notes.push('recortar para TTS streaming');
   if (containsAny(text, hardVulgarity) > 0) notes.push('rechazar por vulgaridad directa');
-  return notes.length ? notes : ['sin alerta fuerte'];
+  if (context?.diagnosis?.recipe_note && context.diagnosis.recipe_note !== 'mantener receta') {
+    notes.push(context.diagnosis.recipe_note);
+  }
+  const uniqueNotes = [...new Set(notes.join('; ').split('; ').filter(Boolean))];
+  return uniqueNotes.length ? uniqueNotes : ['sin alerta fuerte'];
 }
 
 const results = [];
@@ -201,20 +231,37 @@ for (const { value: candidate } of candidates) {
     trigger: scoreTrigger(text, scenario),
     ritmo_oral: scoreRitmoOral(text),
     repertoire_economy: scoreRepertoireEconomy(text),
+    distance_geometry: scoreDistanceGeometry(text, scenario),
+    scenic_pleasure: scoreScenicPleasure(text, scenario),
     no_repetition: scoreNoRepetition(text),
     safety: scoreSafety(text),
     voice_ready: scoreVoiceReady(text)
   };
-  const total = Object.values(scores).reduce((sum, score) => sum + score, 0);
+  const judgeContext = buildResponseJudgeContext({
+    character,
+    variables: judgeSource.variables,
+    rubric: judgeSource.rubric,
+    scenario,
+    candidate: {
+      variant: candidate.variant,
+      response: text,
+      notes: candidate.notes,
+      user_input: scenario.user_input,
+      risk: scenario.risk
+    },
+    scores
+  });
+  const total = judgeContext.weighted_score;
 
   results.push({
     scenario_id: candidate.scenario_id,
     state: scenario.state,
     variant: candidate.variant,
     total,
-    decision: decide(total, scores),
+    decision: decideResponseFromContext(judgeContext),
     scores,
-    notes: notesFor(scores, text),
+    notes: notesFor(scores, text, judgeContext),
+    judge_context: judgeContext,
     user_input: scenario.user_input,
     candidate_response: text
   });
