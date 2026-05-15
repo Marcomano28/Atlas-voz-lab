@@ -29,12 +29,28 @@ reporte del juez
 
 Para cada caso, mirar:
 
+- metadata del juicio;
 - escenario;
 - entrada del usuario;
 - respuesta candidata;
 - decision del juez;
 - notas del juez;
 - puntuaciones.
+
+La metadata no es burocracia. Es la forma de saber con que receta fue juzgado el
+material:
+
+```txt
+judge_version          -> version del catador automatico
+judge_context_version  -> version del paquete de juicio
+variables_sha256       -> ADN exacto del personaje usado en esa cata
+rubric_sha256          -> rubrica exacta usada en esa cata
+judged_at              -> fecha del juicio
+```
+
+Si una entrada no trae `judge_version`, el humano puede comentarla, pero no debe
+aceptarla como gold definitivo. Sin esa marca no se podra auditar en el futuro si
+el problema fue la frase, el juez, la rubrica o los pesos.
 
 Luego marcar:
 

@@ -4,6 +4,7 @@ Departamento futuro para la UI de catador.
 
 Aqui el humano revisa:
 
+- metadata de trazabilidad;
 - frases candidatas;
 - decisiones del juez;
 - falsos aprobados;
@@ -21,6 +22,7 @@ Esto sabe a barrio de verdad o solo tiene azucar por arriba?
 
 Primera pizarra de control local:
 
+- debe mostrar `judge_version` y hashes antes de aprobar gold;
 - carga reportes JSON;
 - muestra arcos;
 - muestra score del reloj;

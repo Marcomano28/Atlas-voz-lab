@@ -831,6 +831,93 @@ Paso atras deliberado
 Ese arco prueba casi todo lo importante: distancia, placer, respeto, control y
 resolucion.
 
+## Protocolo de cata y auditoria
+
+Este protocolo se aplica cada vez que el supervisor revise una frase, un arco o un
+reporte del juez.
+
+### Paso 0. Verificar trazabilidad
+
+Antes de mirar si una pieza "suena bien", el auditor debe revisar su metadata:
+
+```txt
+metadata.judge_version
+metadata.judge_context_version
+metadata.variables_sha256
+metadata.rubric_sha256
+metadata.judged_at
+```
+
+Si falta `judge_version`, la pieza no debe entrar al gold dataset. Puede revisarse
+como material bruto, pero no aprobarse como patron.
+
+Motivo:
+
+- el juez cambia con el tiempo;
+- los pesos de `variables.json` cambian;
+- la rubrica cambia;
+- una frase aprobada por un juez viejo puede no pasar con el juez nuevo;
+- sin versionado no se puede explicar despues por que algo entro al dataset.
+
+Regla practica:
+
+```txt
+sin judge_version -> no gold
+sin variables_sha256 -> no gold
+sin decision humana -> no gold definitivo
+```
+
+### Paso 1. Leer la pieza sin mirar el score
+
+Primero se cata con paladar humano:
+
+- suena a Yanis?
+- resuelve la situacion?
+- mantiene limite?
+- tiene vida o solo esta correcta?
+- se puede escuchar en voz?
+
+### Paso 2. Comparar con el juez
+
+Despues se mira:
+
+- decision del juez;
+- scores;
+- diagnostico;
+- notas de receta;
+- reloj/arco si aplica.
+
+La pregunta no es "me gusta el score?". La pregunta es:
+
+```txt
+El juez vio lo mismo que vio el paladar humano?
+```
+
+### Paso 3. Marcar destino
+
+El auditor decide:
+
+- `gold`;
+- `approved_candidate`;
+- `review`;
+- `rough_candidate`;
+- `rejected`.
+
+Si hay desacuerdo entre humano y juez, se deja nota de receta. Esa nota no solo
+corrige la frase: corrige la maquina.
+
+### Paso 4. Registrar la razon historica
+
+Cada aprobacion importante debe poder leerse meses despues y responder:
+
+```txt
+quien la aprobo
+con que version del juez
+con que ADN del personaje
+por que se considero patron
+que riesgo quedaba pendiente
+```
+
 ## Responsabilidades permanentes
 
 ### 1. Juzgar al juez
