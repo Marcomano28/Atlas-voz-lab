@@ -12,10 +12,10 @@ Por defecto corre en dry-run sin dependencias externas. Para usar Anthropic:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -28,9 +28,8 @@ sys.path.insert(0, str(ROOT))
 from core.instruments.yanis_clock import YanisClock  # noqa: E402
 
 
-JUDGE_VERSION = "yanis_judge.user_actor_loop.v1"
-JUDGE_CONTEXT_VERSION = None
 CLOCK_VERSION = "yanis_clock.v1"
+JUDGE_CONTEXT_CLI = ROOT / "core" / "judges" / "judge_context_cli.js"
 
 
 ACTOR_PROFILES = {
@@ -188,24 +187,10 @@ JUDGE_FIELDS = [
 ]
 
 
-def load_variables() -> tuple[dict, str]:
+def load_variables() -> dict:
     path = ROOT / "characters" / "yanislaidis" / "variables.json"
     text = path.read_text(encoding="utf-8")
-    return json.loads(text), hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
-def judgment_metadata(judge_type: str, variables_sha256: str,
-                      judged_at: str | None = None) -> dict:
-    return {
-        "schema_version": "judgment_metadata.v1",
-        "judged_at": judged_at or datetime.now(timezone.utc).isoformat(),
-        "judge_version": JUDGE_VERSION,
-        "judge_context_version": JUDGE_CONTEXT_VERSION,
-        "judge_type": judge_type,
-        "variables_sha256": variables_sha256,
-        "rubric_sha256": None,
-        "clock_version": CLOCK_VERSION,
-    }
+    return json.loads(text)
 
 
 def now_stamp() -> str:
@@ -214,6 +199,84 @@ def now_stamp() -> str:
 
 def strip_json(text: str) -> str:
     return re.sub(r"^```json\s*|\s*```$", "", text.strip()).strip()
+
+
+def call_judge_context(payload: dict) -> dict:
+    result = subprocess.run(
+        ["node", str(JUDGE_CONTEXT_CLI)],
+        cwd=ROOT,
+        input=json.dumps(payload, ensure_ascii=False),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            "judge_context_cli failed:\n"
+            f"STDOUT:\n{result.stdout}\n"
+            f"STDERR:\n{result.stderr}"
+        )
+    return json.loads(result.stdout)
+
+
+def normalize_scores(raw_scores: dict) -> dict:
+    raw_scores = raw_scores or {}
+    scores = {}
+    for field in JUDGE_FIELDS:
+        raw_value = raw_scores.get(field, 3)
+        try:
+            value = float(raw_value)
+        except (TypeError, ValueError):
+            value = 3.0
+        scores[field] = max(1, min(5, round(value)))
+    return scores
+
+
+def response_scenario(actor: str, index: int, user_msg: str, clock_snapshot: dict) -> dict:
+    return {
+        "id": f"live-{actor}-{index}",
+        "state": clock_snapshot.get("state", "exploracion"),
+        "temperature": "alta",
+        "user_input": user_msg,
+        "expected_behavior": (
+            "Respuesta viva de Yanis en loop de usuario actor: sostener personaje, "
+            "leer el trigger y conservar geometria de distancia."
+        ),
+        "risk": ACTOR_PROFILES[actor]["description"],
+    }
+
+
+def contextualized_response_judgment(
+    *,
+    actor: str,
+    index: int,
+    user_msg: str,
+    yanis_resp: str,
+    clock_snapshot: dict,
+    history: list[dict],
+    scores: dict,
+    model_notes: Any = None,
+) -> dict:
+    scenario = response_scenario(actor, index, user_msg, clock_snapshot)
+    payload = {
+        "mode": "response",
+        "character": "yanislaidis",
+        "scenario": scenario,
+        "candidate": {
+            "variant": "alta",
+            "response": yanis_resp,
+            "notes": "user_actor_loop",
+            "user_input": user_msg,
+            "risk": scenario["risk"],
+        },
+        "scores": normalize_scores(scores),
+        "clock": clock_snapshot,
+        "history": history,
+    }
+    result = call_judge_context(payload)
+    if model_notes:
+        result["model_notes"] = model_notes
+    return result
 
 
 def load_text(path: Path) -> str:
@@ -253,7 +316,13 @@ Criterios 1-5. Debes considerar variables.json como fuente de verdad del persona
 - voice_ready
 - safety
 
-Decision: approved_candidate, review, rough_candidate o rejected."""
+Devuelve solo:
+{
+  "scores": { ...criterios 1-5... },
+  "notes": "diagnostico breve"
+}
+
+No calcules decision ni weighted_score: eso lo hace el contrato central del juez."""
 
 
 def get_anthropic_client():
@@ -286,17 +355,8 @@ def dry_yanis_response(profile: str, index: int) -> str:
     return messages[(index - 1) % len(messages)]
 
 
-def weighted_score(scores: dict, weights: dict) -> float:
-    usable = [(key, value) for key, value in scores.items() if key in weights]
-    if not usable:
-        return 0.0
-    weighted_total = sum(value * weights[key] for key, value in usable)
-    max_total = sum(5 * weights[key] for key, _ in usable)
-    return round((weighted_total / max_total) * 10, 2)
-
-
-def heuristic_judge(user_msg: str, yanis_resp: str, clock_snapshot: dict,
-                    variables: dict, variables_sha256: str) -> dict:
+def heuristic_judge(actor: str, index: int, user_msg: str, yanis_resp: str,
+                    clock_snapshot: dict, history: list[dict]) -> dict:
     text = yanis_resp.lower()
     has_cuba = any(token in text for token in ["asere", "mi amor", "barrio", "fula", "guagua", "saldo", "apag", "sombrita"])
     has_limit = not any(token in text for token in ["pinga", "singar", "mamar"])
@@ -312,27 +372,21 @@ def heuristic_judge(user_msg: str, yanis_resp: str, clock_snapshot: dict,
         "voice_ready": 4,
         "safety": 5 if has_limit else 1,
     }
-    weighted = weighted_score(scores, variables.get("judge_weights", {}))
-    if scores["safety"] < 5:
-        decision = "rejected"
-    elif weighted >= 8:
-        decision = "approved_candidate"
-    elif weighted >= 6:
-        decision = "review"
-    else:
-        decision = "rough_candidate"
-    return {
-        "metadata": judgment_metadata("response", variables_sha256),
-        "scores": scores,
-        "weighted_score": round(weighted, 2),
-        "decision": decision,
-        "notes": "heuristic dry judge",
-    }
+    return contextualized_response_judgment(
+        actor=actor,
+        index=index,
+        user_msg=user_msg,
+        yanis_resp=yanis_resp,
+        clock_snapshot=clock_snapshot,
+        history=history,
+        scores=scores,
+        model_notes="heuristic dry judge",
+    )
 
 
-def live_judge(client: Any, user_msg: str, yanis_resp: str,
+def live_judge(client: Any, actor: str, index: int, user_msg: str, yanis_resp: str,
                clock_snapshot: dict, history: list[dict], model: str,
-               variables: dict, variables_sha256: str) -> dict:
+               variables: dict) -> dict:
     context = "\n".join(
         f"[{item['role'].upper()}]: {item['content']}"
         for item in history[-6:]
@@ -356,7 +410,7 @@ VARIABLES DEL PERSONAJE:
     "judge_weights": variables.get("judge_weights", {})
 }, ensure_ascii=False)}
 
-Devuelve JSON con scores, weighted_score, decision y notes."""
+Devuelve JSON con scores y notes. No calcules decision ni weighted_score."""
     text = call_model(
         client,
         get_judge_system(),
@@ -365,30 +419,106 @@ Devuelve JSON con scores, weighted_score, decision y notes."""
         max_tokens=500,
         model=model,
     )
-    result = json.loads(strip_json(text))
-    result["metadata"] = judgment_metadata("response", variables_sha256)
-    return result
+    raw_result = json.loads(strip_json(text))
+    raw_scores = raw_result.get("scores", raw_result)
+    return contextualized_response_judgment(
+        actor=actor,
+        index=index,
+        user_msg=user_msg,
+        yanis_resp=yanis_resp,
+        clock_snapshot=clock_snapshot,
+        history=history,
+        scores=raw_scores,
+        model_notes=raw_result.get("notes"),
+    )
+
+
+def score_distance_geometry_from_arc(arc: dict) -> int:
+    distance_range = arc.get("rango_distancia_m", 0) or 0
+    step_backs = arc.get("pasos_atras", 0) or 0
+    if distance_range >= 4 or step_backs > 0:
+        return 5
+    if distance_range >= 2:
+        return 4
+    if distance_range >= 1:
+        return 3
+    return 2
+
+
+def score_scenic_pleasure_from_arc(arc: dict) -> int:
+    max_pleasure = arc.get("placer_max", 0) or 0
+    pleasure_range = arc.get("rango_placer", 0) or 0
+    if max_pleasure >= 7 and pleasure_range >= 2:
+        return 5
+    if max_pleasure >= 5.5 or pleasure_range >= 1.5:
+        return 4
+    if max_pleasure >= 4:
+        return 3
+    return 2
+
+
+def score_clock_arc(arc: dict) -> int:
+    return max(1, min(5, round(((arc.get("score", 0) or 0) / 10) * 5)))
+
+
+def live_arc_descriptor(character: str, actor: str, turns: list[dict]) -> dict:
+    return {
+        "id": f"{character}-live-{actor}",
+        "title": f"Live loop: {actor}",
+        "variant": "alta",
+        "expected_arc": [turn["clock"].get("state", "exploracion") for turn in turns],
+        "turns": [
+            {
+                "turn": turn["turn"],
+                "user_actor": actor,
+                "user_input": turn["user_msg"],
+                "expected_state": turn["clock"].get("state", "exploracion"),
+                "goal": "Turno generado por user actor loop; medir continuidad viva de Yanis.",
+            }
+            for turn in turns
+        ],
+    }
+
+
+def arc_scores_from_clock(arc: dict, turns: list[dict]) -> dict:
+    states = [turn["clock"].get("state") for turn in turns if turn.get("clock")]
+    unique_states = len(set(states))
+    rejected_turns = sum(1 for turn in turns if turn["judge"]["decision"] == "rejected")
+    score = arc.get("score", 0) or 0
+    return {
+        "state_coherence": 4 if unique_states > 1 else 3,
+        "dramatic_tension": 5 if score >= 7 else 4 if score >= 5 else 3,
+        "resolution": 4 if len(turns) >= 3 else 2,
+        "memory_continuity": 3,
+        "repertoire_economy": 5 if (arc.get("variedad_repo", 0) or 0) >= 2 else 3,
+        "character_integrity": 3 if rejected_turns else 4,
+        "distance_geometry": score_distance_geometry_from_arc(arc),
+        "scenic_pleasure": score_scenic_pleasure_from_arc(arc),
+        "clock_score": score_clock_arc(arc),
+    }
 
 
 def normalize_result_for_tasting(character: str, actor: str, turns: list[dict],
-                                 arc: dict, variables_sha256: str) -> dict:
+                                 arc: dict) -> dict:
     decisions = {}
     for turn in turns:
         decision = turn["judge"]["decision"]
         decisions[decision] = decisions.get(decision, 0) + 1
 
-    scores = {
-        "state_coherence": 3,
-        "dramatic_tension": 3,
-        "resolution": 3,
-        "memory_continuity": 3,
-        "repertoire_economy": 5 if arc.get("variedad_repo", 0) >= 2 else 3,
-        "character_integrity": 4,
-    }
-    total = sum(scores.values())
-    decision = "strong_arc" if arc["score"] >= 7 else "review"
+    arc_payload = live_arc_descriptor(character, actor, turns)
+    scores = arc_scores_from_clock(arc, turns)
+    arc_judgment = call_judge_context({
+        "mode": "arc",
+        "character": character,
+        "arc": arc_payload,
+        "scores": scores,
+        "clock_arc": arc,
+        "clock_snapshot": turns[-1]["clock"] if turns else {},
+    })
+    total = arc_judgment["weighted_score"]
+    decision = arc_judgment["decision"]
     summary = {decision: 1}
-    metadata = judgment_metadata("arc", variables_sha256)
+    metadata = arc_judgment["metadata"]
 
     return {
         "character": character,
@@ -399,7 +529,7 @@ def normalize_result_for_tasting(character: str, actor: str, turns: list[dict],
             "judge_context_version": metadata["judge_context_version"],
             "variables_sha256": metadata["variables_sha256"],
             "rubric_sha256": metadata["rubric_sha256"],
-            "clock_version": metadata["clock_version"],
+            "clock_version": CLOCK_VERSION,
         },
         "average": total,
         "summary": summary,
@@ -413,6 +543,8 @@ def normalize_result_for_tasting(character: str, actor: str, turns: list[dict],
                 "total": total,
                 "decision": decision,
                 "scores": scores,
+                "judge_context": arc_judgment.get("judge_context"),
+                "diagnosis": arc_judgment.get("diagnosis"),
                 "clock_arc": arc,
                 "clock_snapshot": turns[-1]["clock"] if turns else {},
                 "turn_log": turns,
@@ -435,7 +567,7 @@ def write_outputs(report: dict, output: Path | None, jsonl: Path | None) -> Path
 
 def run_loop(args: argparse.Namespace) -> dict:
     client = None if args.dry_run else get_anthropic_client()
-    variables, variables_sha256 = load_variables()
+    variables = load_variables()
     clock = YanisClock(actor_profile=args.actor)
     actor_history: list[dict] = []
     yanis_history: list[dict] = []
@@ -476,9 +608,19 @@ def run_loop(args: argparse.Namespace) -> dict:
         yanis_history.append({"role": "assistant", "content": yanis_resp})
 
         if args.dry_run:
-            judge = heuristic_judge(actor_msg, yanis_resp, clock_snapshot, variables, variables_sha256)
+            judge = heuristic_judge(args.actor, index, actor_msg, yanis_resp, clock_snapshot, yanis_history)
         else:
-            judge = live_judge(client, actor_msg, yanis_resp, clock_snapshot, yanis_history, args.model, variables, variables_sha256)
+            judge = live_judge(
+                client,
+                args.actor,
+                index,
+                actor_msg,
+                yanis_resp,
+                clock_snapshot,
+                yanis_history,
+                args.model,
+                variables,
+            )
             time.sleep(args.pause)
 
         actor_history.append({
@@ -495,7 +637,7 @@ def run_loop(args: argparse.Namespace) -> dict:
         })
 
     arc = clock.arc_quality()
-    report = normalize_result_for_tasting("yanislaidis", args.actor, turns, arc, variables_sha256)
+    report = normalize_result_for_tasting("yanislaidis", args.actor, turns, arc)
     report["run"] = {
         "actor": args.actor,
         "turns": args.turns,

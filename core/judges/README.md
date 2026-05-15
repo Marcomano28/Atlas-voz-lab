@@ -27,7 +27,24 @@ entrada del dataset.
 ## Archivos
 
 - `build_judge_context.js`: construye paquetes de juicio desde el ADN del personaje.
+- `judge_context_cli.js`: puente JSON por stdin/stdout para que runners Python usen
+  el mismo contexto, pesos, normalizacion de estados, decision y metadata.
 - `../schemas/judge-context.schema.json`: contrato del contexto que recibe un juez.
+
+## Regla de integracion
+
+Los runners pueden obtener scores de una heuristica o de un modelo-juez, pero no
+deben calcular por su cuenta:
+
+- `weighted_score`;
+- `decision`;
+- `judge_version`;
+- `judge_context_version`;
+- hashes de variables/rubrica.
+
+Eso lo produce siempre `build_judge_context.js` a traves del CLI o de import
+directo en JS. Asi el loop vivo, el dry-run y los arcos usan una sola fuente de
+verdad.
 
 ## Versiones
 
