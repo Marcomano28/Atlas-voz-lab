@@ -38,7 +38,19 @@ const cubanMarkers = [
   'candela',
   'sombrita',
   'barrio',
-  'cobertura'
+  'cobertura',
+  'caballero',
+  'mata',
+  'relajo',
+  'esquina',
+  'agua de coco',
+  'refresco de lata',
+  'midiendo el aceite',
+  'motor a punto',
+  'primera curva',
+  'luz corta',
+  'saltarte la cerca',
+  'se te enreden los pies'
 ];
 
 const yanisMarkers = [
@@ -55,7 +67,16 @@ const yanisMarkers = [
   'carrocería',
   'arrímate',
   'maquillaje',
-  'cimientos'
+  'cimientos',
+  'edición limitada',
+  'aceite',
+  'frenos',
+  'relajo',
+  'vuelta',
+  'agua de coco',
+  'anda suave',
+  'luz corta',
+  'saltarte la cerca'
 ];
 
 const hardVulgarity = [
@@ -103,10 +124,32 @@ function scoreTrigger(text, scenario) {
     return lower.includes('cadena') || lower.includes('cableado') || lower.includes('espejuelos') ? 5 : 3;
   }
   if (state === 'seduccion_alianza') {
-    return lower.includes('curva') || lower.includes('candela') || lower.includes('planta eléctrica') ? 5 : 3;
+    return lower.includes('curva')
+      || lower.includes('candela')
+      || lower.includes('planta eléctrica')
+      || lower.includes('paso')
+      || lower.includes('vuelta')
+      || lower.includes('edición limitada')
+      || lower.includes('coco')
+      || lower.includes('relajo') ? 5 : 3;
+  }
+  if (state === 'coqueteo_basico') {
+    return lower.includes('aceite')
+      || lower.includes('motor')
+      || lower.includes('frenos')
+      || lower.includes('curva')
+      || lower.includes('vitrina')
+      || lower.includes('contenido') ? 5 : 3;
   }
   if (state === 'insistencia_pesada') {
-    return lower.includes('insistencia') || lower.includes('2g') || lower.includes('cobertura') ? 5 : 3;
+    return lower.includes('insistencia')
+      || lower.includes('2g')
+      || lower.includes('cobertura')
+      || lower.includes('velocidad')
+      || lower.includes('saltarte')
+      || lower.includes('anda suave')
+      || lower.includes('primera')
+      || lower.includes('luz corta') ? 5 : 3;
   }
   if (state === 'astilla_resolver') {
     return lower.includes('astilla')
@@ -181,7 +224,25 @@ function scoreDistanceGeometry(text, scenario) {
     return lower.includes('camina') || lower.includes('banco') || lower.includes('puerta') || lower.includes('bloquear') ? 5 : 4;
   }
   if (scenario.state === 'seduccion_alianza') {
-    return lower.includes('curva') || lower.includes('base') || lower.includes('cerca') ? 4 : 3;
+    return lower.includes('curva')
+      || lower.includes('base')
+      || lower.includes('cerca')
+      || lower.includes('paso')
+      || lower.includes('vuelta')
+      || lower.includes('frenos')
+      || lower.includes('relajo')
+      || lower.includes('puntería')
+      || lower.includes('centro') ? 4 : 3;
+  }
+  if (scenario.state === 'coqueteo_basico') {
+    return lower.includes('motor') || lower.includes('frenos') || lower.includes('curva') ? 5 : 3;
+  }
+  if (scenario.state === 'insistencia_pesada') {
+    return lower.includes('velocidad')
+      || lower.includes('anda suave')
+      || lower.includes('primera')
+      || lower.includes('luz corta')
+      || lower.includes('saltarte') ? 5 : 3;
   }
   if (scenario.state === 'confidencia_filosofica') {
     return lower.includes('sabes') || lower.includes('corazón') || lower.includes('voz') ? 4 : 3;
@@ -200,8 +261,18 @@ function scoreScenicPleasure(text, scenario) {
   if (scenario.state === 'desden_nevera' || scenario.state === 'machete_agresivo') {
     return 3;
   }
-  if (lower.includes('candela') || lower.includes('me gusta') || lower.includes('juego') || lower.includes('brillo')) {
+  if (lower.includes('candela')
+    || lower.includes('me gusta')
+    || lower.includes('juego')
+    || lower.includes('brillo')
+    || lower.includes('edición limitada')
+    || lower.includes('coco')
+    || lower.includes('vuelta')
+    || lower.includes('relajo')) {
     return 5;
+  }
+  if (scenario.state === 'coqueteo_basico' && (lower.includes('motor') || lower.includes('frenos'))) {
+    return 4;
   }
   if (scenario.state === 'astilla_resolver' && (lower.includes('arrímate') || lower.includes('maquillaje'))) {
     return 4;
