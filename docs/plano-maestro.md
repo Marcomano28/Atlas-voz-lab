@@ -247,6 +247,11 @@ respuesta + arco + reloj + variables
   -> nota de receta
 ```
 
+`rubrica_yanis.md` es el contrato humano de scoring: define que significa un 1,
+3 o 5 para cubanidad, yanisidad, limite, distancia, placer, voz, seguridad,
+repeticion, repertorio y arco. Sin esa rubrica, el juez produce numeros sin
+paladar.
+
 ### Trazabilidad del juicio
 
 Cada entrada evaluada debe conservar metadata del juez que la aprobo, rechazo o
