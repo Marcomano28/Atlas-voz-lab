@@ -79,7 +79,10 @@ function scoreMemoryContinuity(arc) {
 }
 
 function scoreRepertoireEconomy(arc) {
-  const text = arc.turns.map((turn) => `${turn.user_input} ${turn.goal}`).join(' ').toLowerCase();
+  const text = arc.turns
+    .map((turn) => `${turn.user_input} ${turn.ideal_yanis_response ?? ''} ${turn.goal}`)
+    .join(' ')
+    .toLowerCase();
   const images = ['saldo', 'apag', 'motor', 'astilla', 'guagua', 'barrio'];
   const repeated = images.filter((image) => text.split(image).length - 1 > 2);
   if (repeated.length === 0) return 5;
@@ -88,10 +91,75 @@ function scoreRepertoireEconomy(arc) {
 }
 
 function scoreCharacterIntegrity(arc) {
-  const goals = arc.turns.map((turn) => turn.goal).join(' ').toLowerCase();
+  const goals = arc.turns
+    .map((turn) => `${turn.goal} ${turn.ideal_yanis_response ?? ''}`)
+    .join(' ')
+    .toLowerCase();
   const hasLimit = /limite|sin vulgaridad|no acepta|controlada|servil/.test(goals);
   const hasYanisLogic = /chucho|astilla|swing|coqueteo|filosofia|reina|machete/.test(goals);
   return clamp(3 + Number(hasLimit) + Number(hasYanisLogic));
+}
+
+function annotatedArcQuality(arc, fallbackClockArc) {
+  const annotatedTurns = arc.turns.filter((turn) => Number.isFinite(turn.distance_m) && Number.isFinite(turn.pleasure));
+  if (annotatedTurns.length < 3) return fallbackClockArc;
+
+  const distances = annotatedTurns.map((turn) => Number(turn.distance_m));
+  const pleasures = annotatedTurns.map((turn) => Number(turn.pleasure));
+  const moves = annotatedTurns.map((turn) => turn.distance_move ?? 'holding');
+  const states = annotatedTurns.map((turn) => turn.expected_state).filter(Boolean);
+  const maxPleasure = Math.max(...pleasures);
+  const minPleasure = Math.min(...pleasures);
+  const pleasureRange = maxPleasure - minPleasure;
+  const maxDistance = Math.max(...distances);
+  const minDistance = Math.min(...distances);
+  const distanceRange = maxDistance - minDistance;
+  const peakIndex = pleasures.indexOf(maxPleasure);
+  const stepBacks = moves.filter((move) => move === 'step_back').length;
+  const pleasureRises = pleasures
+    .slice(1)
+    .filter((pleasure, index) => pleasure > pleasures[index] + 0.4)
+    .length;
+  const changes = new Set(states).size;
+  const semanticFields = new Set([
+    ...(arc.semantic_fields ?? []),
+    ...arc.turns.flatMap((turn) => turn.semantic_fields ?? [])
+  ]).size;
+
+  let score = 0;
+  score += Math.min(distanceRange * 0.45, 2.5);
+  score += stepBacks ? 1.5 : 0;
+  score += Math.min(pleasureRange * 0.55, 2.0);
+  score += peakIndex > 0 && peakIndex < pleasures.length - 1 ? 1.2 : 0;
+  score += Math.min(changes * 0.55, 2.2);
+  score += Math.min(semanticFields * 0.35, 1.1);
+  score += pleasureRises ? 0.8 : 0;
+
+  const notes = [];
+  if (distanceRange < 2) notes.push('distancia plana en coreografia anotada');
+  if (stepBacks === 0 && minDistance <= 5) notes.push('hubo cercania anotada, pero no paso atras');
+  if (pleasureRange < 1.5) notes.push('placer anotado demasiado plano');
+  if (peakIndex === pleasures.length - 1) notes.push('sin bajada despues del pico de placer');
+  if (notes.length === 0) notes.push('coreografia anotada bien construida');
+
+  return {
+    ...(fallbackClockArc ?? {}),
+    source: 'turn_annotations',
+    score: Number(Math.min(score, 10).toFixed(2)),
+    hay_climax: peakIndex > 0 && peakIndex < pleasures.length - 1,
+    cambios_estado: changes,
+    variedad_repo: semanticFields || fallbackClockArc?.variedad_repo || 0,
+    distancia_min_m: Number(minDistance.toFixed(2)),
+    distancia_max_m: Number(maxDistance.toFixed(2)),
+    rango_distancia_m: Number(distanceRange.toFixed(2)),
+    movimientos_distancia: moves,
+    pasos_atras: stepBacks,
+    placer_min: Number(minPleasure.toFixed(2)),
+    placer_max: Number(maxPleasure.toFixed(2)),
+    rango_placer: Number(pleasureRange.toFixed(2)),
+    subidas_placer: pleasureRises,
+    notes
+  };
 }
 
 function scoreDistanceGeometryFromClock(clockArc) {
@@ -148,7 +216,7 @@ function runClock(arc) {
 
 const results = arcs.map((arc) => {
   const clock = runClock(arc);
-  const clockArc = clock.arc_quality ?? null;
+  const clockArc = annotatedArcQuality(arc, clock.arc_quality ?? null);
   const scores = {
     state_coherence: scoreStateCoherence(arc),
     dramatic_tension: scoreDramaticTension(arc),
@@ -225,7 +293,7 @@ Summary:
 
 ${Object.entries(summary).map(([key, value]) => `- ${key}: ${value}`).join('\n')}
 
-| Arc | Title | Variant | Turns | Total | Decision | Clock score | Distance | Step backs | Pleasure | Aliveness | Clock notes |
+| Arc | Title | Variant | Turns | Total | Decision | Arc score | Distance | Step backs | Pleasure | Aliveness | Arc notes |
 | --- | --- | --- | ---: | ---: | --- | ---: | --- | ---: | --- | --- | --- |
 ${rows}
 `);
