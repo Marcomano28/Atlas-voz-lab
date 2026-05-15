@@ -42,6 +42,7 @@ factory/
   candidate-generation/
   recipe-mutation/
   batch-runs/
+  curation/
   reports/
 characters/
   yanislaidis/
@@ -113,9 +114,14 @@ npm run pack:yanis
 npm run dry:yanis
 npm run audit:yanis
 npm run arc:yanis
+npm run curate -- out/yanislaidis/reports/<report>.json
 ```
 
 `validate` revisa que los escenarios JSONL tengan forma correcta.
 
 `pack:yanis` arma paquetes de prueba en `out/yanislaidis/` para comparar variantes
 de prompt o modelo.
+
+`curate` lee un reporte JSON del juez y crea bandejas de trabajo en
+`characters/<personaje>/datasets/curation/`. No escribe en `gold`: el oro requiere
+decision humana.
