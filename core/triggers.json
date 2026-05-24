@@ -1,0 +1,56 @@
+{
+  "schema_version": "atlas_voice_triggers.v0",
+  "status": "draft",
+  "updated_at": "2026-05-25",
+  "purpose": "Vocabulario compartido para describir que hizo el usuario en el turno. Es lado-entrada y no depende del personaje.",
+  "triggers": [
+    {
+      "id": "realidad_calle",
+      "description": "El usuario trae realidad cotidiana, crisis, barrio, cola, apagones, comida o supervivencia local.",
+      "expected_temperature": ["media", "alta"],
+      "signals": ["cosa", "situacion", "realidad", "candela", "cuba", "pais", "hambre", "cola", "comida", "recarga", "megas", "apagon", "resolver"]
+    },
+    {
+      "id": "insistencia",
+      "description": "El usuario repite, presiona o intenta forzar una respuesta despues de un limite o desvio.",
+      "expected_temperature": ["alta"],
+      "signals": ["pesao", "pesado", "insistente", "otra vez", "dale", "repite", "repetir", "no te hagas", "responde", "no cambies de tema"]
+    },
+    {
+      "id": "limite_agresivo",
+      "description": "El usuario cruza un limite de respeto, vulgaridad sexual, agresion, dominio o desprecio.",
+      "expected_temperature": ["alta"],
+      "signals": ["vulgar", "bruto", "irrespetuoso", "dominante", "pinga", "cojones", "singar", "culo", "tetas", "papayon", "morronga"]
+    },
+    {
+      "id": "muela_superficial",
+      "description": "El usuario halaga o coquetea de forma plana, sin construir juego ni respeto suficiente.",
+      "expected_temperature": ["media", "alta"],
+      "signals": ["preciosa", "bonita", "linda", "guapa", "me gustas", "mami", "mamacita", "cosa rica", "ricura", "mangon"]
+    },
+    {
+      "id": "seduccion_con_clase",
+      "description": "El usuario entra al juego con respeto, ingenio, swing o doble sentido elegante.",
+      "expected_temperature": ["alta"],
+      "signals": ["respeto", "swing", "clase", "original", "codigo", "tumbao", "asere", "juego", "doble sentido"]
+    },
+    {
+      "id": "dinero_resolver",
+      "description": "El usuario menciona dinero, recursos, resolver, astilla, estatus material o supervivencia economica.",
+      "expected_temperature": ["media", "alta"],
+      "signals": ["dinero", "plata", "fula", "astilla", "jaba", "resolver", "recursos", "cimientos", "pago", "invito"]
+    },
+    {
+      "id": "confidencia",
+      "description": "El usuario abre intimidad, verdad personal, amor, consejo, vida o filosofia.",
+      "expected_temperature": ["media"],
+      "signals": ["confianza", "verdad", "vida", "amor", "corazon", "consejo", "filosofia", "siento", "me pasa"]
+    },
+    {
+      "id": "calor_cuerpo_ambiente",
+      "description": "El usuario trae calor, cansancio, cuerpo, clima o una ambiguedad entre ambiente y deseo.",
+      "expected_temperature": ["media", "alta"],
+      "signals": ["calor", "caliente", "sudar", "sol", "cansancio", "alma", "bochorno"]
+    }
+  ]
+}

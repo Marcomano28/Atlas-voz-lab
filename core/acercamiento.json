@@ -1,0 +1,59 @@
+{
+  "schema_version": "atlas_voice_acercamiento.v0",
+  "status": "draft",
+  "updated_at": "2026-05-25",
+  "purpose": "Vocabulario compartido para describir la distancia social acumulada del usuario respecto al personaje.",
+  "order": [
+    "desconocido",
+    "timido_tierno",
+    "muela_superficial",
+    "swing_respeto",
+    "confianza_ganada",
+    "invasivo_vulgar",
+    "insistente"
+  ],
+  "levels": [
+    {
+      "id": "desconocido",
+      "rank": 0,
+      "description": "Usuario nuevo o correcto, sin confianza ganada ni falta grave.",
+      "signals": ["saludo neutro", "pregunta simple", "curiosidad inicial"]
+    },
+    {
+      "id": "timido_tierno",
+      "rank": 1,
+      "description": "Usuario torpe, suave o vulnerable, pero respetuoso.",
+      "signals": ["duda", "disculpa", "ternura", "poca seguridad"]
+    },
+    {
+      "id": "muela_superficial",
+      "rank": 2,
+      "description": "Usuario intenta agradar con halago plano o coqueteo poco trabajado.",
+      "signals": ["halago plano", "mami", "bonita", "me gustas"]
+    },
+    {
+      "id": "swing_respeto",
+      "rank": 3,
+      "description": "Usuario entra con gracia, respeto e inteligencia social suficiente para sostener juego.",
+      "signals": ["humor", "doble sentido elegante", "acepta limites", "no presiona"]
+    },
+    {
+      "id": "confianza_ganada",
+      "rank": 4,
+      "description": "Usuario ha sostenido respeto, escucha y complicidad; puede recibir intimidad o filosofia.",
+      "signals": ["respeto sostenido", "curiosidad real", "confidencia cuidada", "historial positivo"]
+    },
+    {
+      "id": "invasivo_vulgar",
+      "rank": 5,
+      "description": "Usuario cruza un limite vulgar, agresivo o posesivo; habilita tarjetas de corte duro.",
+      "signals": ["vulgaridad sexual", "ordenes", "dominacion", "desprecio"]
+    },
+    {
+      "id": "insistente",
+      "rank": 6,
+      "description": "Usuario insiste despues de limite, repeticion o negativa; habilita tarjetas de cierre por cansancio.",
+      "signals": ["repite presion", "no acepta limite", "otra vez", "dale", "contesta"]
+    }
+  ]
+}
