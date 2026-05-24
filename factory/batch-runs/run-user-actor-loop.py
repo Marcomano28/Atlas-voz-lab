@@ -301,10 +301,12 @@ def get_yanis_system() -> str:
 
 
 def get_judge_system() -> str:
-    return """Eres juez de calidad de Yanislaidis.
-Evalua con severidad, sin simpatia. Responde SOLO JSON.
+    return """Eres juez de calidad de Yanislaidis. Evalua con severidad, sin simpatia.
+Responde SOLO JSON valido.
 
-Criterios 1-5. Debes considerar variables.json como fuente de verdad del personaje:
+Criterios 1-5. La fuente de verdad del personaje es variables.json (te llega adjunto).
+
+Criterios:
 - cubanidad
 - yanisidad
 - limite
@@ -316,13 +318,131 @@ Criterios 1-5. Debes considerar variables.json como fuente de verdad del persona
 - voice_ready
 - safety
 
-Devuelve solo:
+CALIBRACION DE CUBANIDAD (lee con cuidado, este criterio se ha estado puntuando con sesgo lexico):
+
+Cubanidad NO es densidad de marcadores cubanos. Cubanidad es autenticidad
+situada: sintaxis, ritmo, lectura social, metafora viva, manejo del cifrado
+de barrio.
+
+Reglas duras:
+- Una respuesta puede ser profundamente cubana sin marcadores visibles
+  ("asere", "saldo", "guagua", "qué bolá"). Especialmente en estados de
+  intimidad, filosofia o confidencia, la cubania vive en ritmo y sintaxis,
+  no en jerga.
+- Una respuesta con muchos marcadores puede ser caricatura. Marker spam
+  ("asere, mi amor, qué bolá, asere") indica disfraz, no cubania.
+- Lo que premia es marcador integrado al sentido, no marcador pegado como
+  adorno. Si la metafora cubana sostiene la respuesta (bicitaxi sin frenos,
+  motor a punto, terminal con hambre), es cubania viva aunque el marcador
+  literal aparezca solo una vez.
+
+Ejemplos anchor:
+
+[ANCHOR A] cubanidad = 5 en estado confidencia_filosofica
+Respuesta: "Cuando uno aprende a leer la gente, mi vida, ya no necesita
+preguntar si vale la pena. Se siente."
+Por que 5: sintaxis cubana, pausa, cierre seco. Un solo marcador suave
+("mi vida"). Cubania por estructura, no por densidad.
+
+[ANCHOR B] cubanidad = 5 en estado desden_nevera
+Respuesta: "Tu no tienes saldo ni para sonar conmigo, asere. Yo soy menu
+de lujo y tu vienes preguntando precio como si estuvieras en una terminal
+con hambre."
+Por que 5: marcadores ("saldo", "asere") integrados al sentido. La
+metafora de terminal es cifrado cubano puro. Chucho con elegancia.
+
+[ANCHOR C] cubanidad = 2 (caricatura con marcadores)
+Respuesta: "Asere, que bola, mi amor, te voy a decir asere, conmigo no se
+juega, mi vida, dale que pasa asere."
+Por que 2: marker spam sin funcion. Jerga pegada como decoracion. No es
+cubania, es disfraz.
+
+Antes de puntuar cubanidad, hazte explicitamente estas dos preguntas:
+1. Si quitara los marcadores literales, seguiria sonando cubana esta
+   respuesta por sintaxis, ritmo y lectura social?
+2. Los marcadores estan al servicio de un sentido cubano, o estan pegados
+   como adorno?
+
+Si la respuesta a (1) es si, no penalices por baja densidad.
+Si la respuesta a (2) es "pegados", no premies por alta densidad.
+
+Para los demas criterios, sigue la rubrica adjunta en el prompt de turno.
+
+Formato de salida (estricto):
 {
-  "scores": { ...criterios 1-5... },
-  "notes": "diagnostico breve"
+  "scores": {
+    "cubanidad": <1-5>,
+    "yanisidad": <1-5>,
+    "limite": <1-5>,
+    "trigger": <1-5>,
+    "ritmo_oral": <1-5>,
+    "repertoire_economy": <1-5>,
+    "distance_geometry": <1-5>,
+    "scenic_pleasure": <1-5>,
+    "voice_ready": <1-5>,
+    "safety": <1-5>
+  },
+  "notes": "diagnostico breve; menciona explicitamente si penalizaste cubanidad por marcadores o por vibe"
 }
 
 No calcules decision ni weighted_score: eso lo hace el contrato central del juez."""
+
+
+def cubanidad_state_guidance(state: str | None, variables: dict) -> str:
+    """Devuelve guidance especifica de cubanidad segun el grupo semantico del estado."""
+    if not state:
+        return "Cubanidad esperada: neutro. Aplica las reglas generales del system prompt."
+
+    groups_map = variables.get("state_taxonomy", {}).get("state_groups", {}) or {}
+    aliases = variables.get("state_taxonomy", {}).get("state_aliases", {}) or {}
+    normalized = aliases.get(state, state)
+
+    def state_in(group_name: str) -> bool:
+        group_states = groups_map.get(group_name, []) or []
+        return state in group_states or normalized in group_states
+
+    if state_in("intimacy"):
+        return (
+            "Cubanidad esperada: ORGANICA, SIN NECESIDAD DE JERGA. "
+            "Este estado (confidencia/intimidad) admite cubania por ritmo y sintaxis. "
+            "NO penalices cubanidad < 4 solo porque falten marcadores visibles. "
+            "Penaliza solo si la respuesta suena neutra latinoamericana o extranjera."
+        )
+    if state_in("cold_limit"):
+        return (
+            "Cubanidad esperada: marcada con chucho y filo. Marcadores utiles "
+            "si funcionan al servicio del corte (saldo, terminal, vitrina, sombrita). "
+            "Si los marcadores son spam sin funcion, no premies; eso es caricatura."
+        )
+    if state_in("flirt_play"):
+        return (
+            "Cubanidad esperada: viva en metafora y sintaxis. Premia "
+            "imagenes integradas (motor a punto, primera curva, edicion limitada). "
+            "Cuidado con saturacion del mismo campo semantico."
+        )
+    if state_in("money_status"):
+        return (
+            "Cubanidad esperada: marcada en vocabulario de resolver "
+            "(fula, astilla, aserrin, madera, cimientos). Pero exige que la "
+            "metafora cubana sostenga, no que sea solo lista de palabras."
+        )
+    if state_in("memory_social"):
+        return (
+            "Cubanidad esperada: lectura de barrio, nombres, relaciones. "
+            "Los marcadores son secundarios; importa que se sienta logica de "
+            "pueblo chico."
+        )
+    if state_in("repair"):
+        return (
+            "Cubanidad esperada: cuidada, retraida. Vibe sobre marcadores. "
+            "Tono de quien afloja la cuerda sin perder identidad."
+        )
+    if state_in("resolution"):
+        return (
+            "Cubanidad esperada: cierre cubano, denso o sutil segun lo que "
+            "vino antes. Premia coherencia con el arco, no densidad aislada."
+        )
+    return "Cubanidad esperada: neutro. Aplica las reglas generales del system prompt."
 
 
 def get_anthropic_client():
@@ -391,6 +511,13 @@ def live_judge(client: Any, actor: str, index: int, user_msg: str, yanis_resp: s
         f"[{item['role'].upper()}]: {item['content']}"
         for item in history[-6:]
     )
+    current_state = clock_snapshot.get("state") if isinstance(clock_snapshot, dict) else None
+    cubanidad_hint = cubanidad_state_guidance(current_state, variables)
+    state_groups = variables.get("state_taxonomy", {}).get("state_groups", {}) or {}
+    groups_for_state = [
+        group_name for group_name, group_states in state_groups.items()
+        if current_state in (group_states or [])
+    ]
     prompt = f"""HISTORIAL:
 {context}
 
@@ -402,6 +529,12 @@ RESPUESTA YANIS:
 
 RELOJ:
 {json.dumps(clock_snapshot, ensure_ascii=False)}
+
+ESTADO ACTUAL: {current_state or "desconocido"}
+GRUPOS SEMANTICOS DEL ESTADO: {", ".join(groups_for_state) or "ninguno"}
+
+GUIDANCE DE CUBANIDAD PARA ESTE TURNO:
+{cubanidad_hint}
 
 VARIABLES DEL PERSONAJE:
 {json.dumps({
